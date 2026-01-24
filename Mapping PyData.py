@@ -7,11 +7,12 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import re
+    import folium
     import marimo as mo
     import requests
     from bs4 import BeautifulSoup
     from playwright.async_api import async_playwright
-    return async_playwright, mo
+    return async_playwright, folium, mo
 
 
 @app.cell(hide_code=True)
@@ -79,99 +80,102 @@ def _(groups):
 
 @app.cell
 def _(groups):
-    import folium
+    import json
+    from pathlib import Path
     from geopy.geocoders import Nominatim
     from geopy.extra.rate_limiter import RateLimiter
 
-    geolocator = Nominatim(user_agent="pydata_mapper")
-    geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+    CACHE_FILE = Path("geocode_cache.json")
 
-    # Manual overrides for edge cases
-    LOCATION_OVERRIDES = {
-        'NEO AI - a PyData Group': 'Cleveland, Ohio, USA',
-        'PyData Ireland': 'Dublin, Ireland',
-        'PyData T&T': 'Port of Spain, Trinidad and Tobago',
-        'PyData En Español Global.': None,  # Skip - no fixed location
-        'PyData Katsina': 'Katsina, Nigeria',
-        'Copenhagen Julia Meetup Group': 'Copenhagen, Denmark',
-        'PyData Boston - Cambridge': 'Boston, Massachusetts, USA',
-        'PyData Athens': 'Athens, Greece',
-        'Pydata Belgium': 'Brussels, Belgium',
-        'Datenanalyse, Data Science und Statistik - PyData Dortmund': 'Dortmund, Germany',
-        'PyData Bucharest': 'Bucharest, Romania',
-        'PyData Dubai meetup': 'Dubai, UAE',
-        'PyMC Online Meetup': None,  # Skip - online only
-        'Charlottesville Data Science (a PyData Group)': 'Charlottesville, Virginia, USA',
-        'PyData Miami / Machine Learning Meetup': 'Miami, Florida, USA',
-        'Dallas Data Engineers - a PyData Group': 'Dallas, Texas, USA',
-        'Data Engineering Pilipinas - a PyData group': 'Manila, Philippines',
-    }
-
-    def extract_city_from_name(name):
-        # Check overrides first
-        if name in LOCATION_OVERRIDES:
-            return LOCATION_OVERRIDES[name]
-    
-        # Clean up the name to get city
-        city = name.replace('PyData ', '').replace(' Meetup', '').replace(' Group', '')
-        city = city.replace(' - a PyData Group', '').replace(', UK', '')
-    
-        # Some names need country hints for accurate geocoding
-        country_hints = {
-            'Birmingham': 'Birmingham, UK',
-            'Cambridge': 'Cambridge, UK', 
-            'Manchester': 'Manchester, UK',
-            'Bristol': 'Bristol, UK',
-            'Cardiff': 'Cardiff, UK',
-            'Leeds': 'Leeds, UK',
-            'London': 'London, UK',
-            'OMR': 'Chennai, India',  # PyData OMR is in Chennai
-            'Südwest': 'Heidelberg, Germany',
-            'Rhein-Main': 'Frankfurt, Germany',
-            'Trojmiasto': 'Gdansk, Poland',
-            'GRX': 'Granada, Spain',
-            'RJ': 'Rio de Janeiro, Brazil',
-            'T&T': 'Port of Spain, Trinidad',
-            'DC Virtual': 'Washington DC, USA',
-            'SLO': 'San Luis Obispo, California, USA',
-            'PDX': 'Portland, Oregon, USA',
-            'NYC': 'New York City, USA',
-            'Boston - Cambridge': 'Boston, Massachusetts, USA',
+    def load_cache():
+        """Load existing cache or return default structure"""
+        if CACHE_FILE.exists():
+            with open(CACHE_FILE) as f:
+                return json.load(f)
+        return {
+            "hints": {},      # name -> geocode query (or null to skip)
+            "coords": {}      # query -> {lat, lon, display_name}
         }
-    
-        for key, value in country_hints.items():
-            if key in city:
-                return value
-    
-        return city
 
-    # Geocode each group
-    _groups_with_coords = []
-    for _g in groups:
-        city = extract_city_from_name(_g['name'])
+    def save_cache(cache):
+        """Save cache to file"""
+        with open(CACHE_FILE, 'w') as f:
+            json.dump(cache, f, indent=2)
+
+    def get_query_for_group(name, cache):
+        """Get the geocoding query for a group name"""
+        # Check cache hints first (user overrides)
+        if name in cache['hints']:
+            return cache['hints'][name]
+        # Default: strip common prefixes/suffixes
+        return name.replace('PyData ', '').replace(' Meetup', '').replace(' Group', '').replace('PyData', '')
+
+    def geocode_groups(groups):
+        """Geocode groups with caching"""
+        cache = load_cache()
     
-        if city is None:  # Skip groups with no location
-            print(f"⊘ {_g['name']} (skipped)")
-            continue
+        geolocator = Nominatim(user_agent="pydata_mapper", timeout=10)
+        geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1.5)
+    
+        results = []
+        cache_hits = 0
+        api_calls = 0
+    
+        for group in groups:
+            name = group['name']
+            query = get_query_for_group(name, cache)
         
-        try:
-            location = geocode(city)
-            if location:
-                _groups_with_coords.append({
-                    **_g,
-                    'city': city,
-                    'lat': location.latitude,
-                    'lon': location.longitude
+            # Skip if marked as None
+            if query is None:
+                print(f"⊘ {name} (skipped)")
+                continue
+        
+            # Check coordinate cache
+            if query in cache['coords']:
+                cached = cache['coords'][query]
+                results.append({
+                    **group,
+                    'query': query,
+                    'lat': cached['lat'],
+                    'lon': cached['lon']
                 })
-                print(f"✓ {_g['name']} -> {city} ({location.latitude:.2f}, {location.longitude:.2f})")
-            else:
-                print(f"✗ {_g['name']} -> {city} (not found)")
-        except Exception as e:
-            print(f"✗ {_g['name']} -> {city} (error: {e})")
+                print(f"✓ {name} -> {query} ({cached['lat']:.2f}, {cached['lon']:.2f}) [cached]")
+                cache_hits += 1
+                continue
+        
+            # Call Nominatim
+            try:
+                location = geocode(query)
+                if location:
+                    cache['coords'][query] = {
+                        'lat': location.latitude,
+                        'lon': location.longitude,
+                        'display_name': location.address
+                    }
+                    results.append({
+                        **group,
+                        'query': query,
+                        'lat': location.latitude,
+                        'lon': location.longitude
+                    })
+                    print(f"✓ {name} -> {query} ({location.latitude:.2f}, {location.longitude:.2f})")
+                    api_calls += 1
+                else:
+                    print(f"✗ {name} -> {query} (not found)")
+            except Exception as e:
+                print(f"✗ {name} -> {query} (error: {type(e).__name__})")
+    
+        # Save updated cache
+        save_cache(cache)
+    
+        print(f"\nGeocoded {len(results)} of {len(groups)} groups")
+        print(f"Cache hits: {cache_hits}, API calls: {api_calls}")
+    
+        return results
 
-    print(f"\nGeocoded {len(_groups_with_coords)} of {len(groups)} groups")
-    groups_with_coords = _groups_with_coords
-    return folium, groups_with_coords
+    # Run geocoding
+    groups_with_coords = geocode_groups(groups)
+    return (groups_with_coords,)
 
 
 @app.cell

@@ -1,0 +1,720 @@
+{
+  "hints": {
+    "PyData Boston - Cambridge": "Boston, Massachusetts, USA",
+    "PyData Athens": "Athens, Greece",
+    "PyMC Online Meetup": null,
+    "PyData En Espa\u00f1ol Global.": null,
+    "NEO AI - a PyData Group": "Cleveland, Ohio, USA",
+    "PyData Ireland": "Dublin, Ireland",
+    "PyData T&T": "Port of Spain, Trinidad and Tobago",
+    "PyData Katsina": "Katsina, Nigeria",
+    "Copenhagen Julia Meetup Group": "Copenhagen, Denmark",
+    "Pydata Belgium": "Brussels, Belgium",
+    "Datenanalyse, Data Science und Statistik - PyData Dortmund": "Dortmund, Germany",
+    "PyData Bucharest": "Bucharest, Romania",
+    "PyData Dubai meetup": "Dubai, UAE",
+    "Charlottesville Data Science (a PyData Group)": "Charlottesville, Virginia, USA",
+    "PyData Miami / Machine Learning Meetup": "Miami, Florida, USA",
+    "Dallas Data Engineers - a PyData Group": "Dallas, Texas, USA",
+    "Data Engineering Pilipinas - a PyData group": "Manila, Philippines",
+    "PyData OMR": "Chennai, India",
+    "PyData S\u00fcdwest - Artificial Intelligence in Python": "Heidelberg, Germany",
+    "PyData Rhein-Main - Artificial Intelligence in Python": "Frankfurt, Germany",
+    "PyData Trojmiasto": "Gdansk, Poland",
+    "PyData GRX": "Granada, Spain",
+    "PyData RJ": "Rio de Janeiro, Brazil",
+    "PyData DC Virtual": "Washington DC, USA",
+    "PyData SLO": "San Luis Obispo, California, USA",
+    "PyData PDX": "Portland, Oregon, USA",
+    "PyData NYC": "New York City, USA",
+    "PyData Birmingham, UK": "Birmingham, UK",
+    "PyData Cambridge": "Cambridge, UK",
+    "PyData Manchester": "Manchester, UK",
+    "PyData Bristol": "Bristol, UK",
+    "PyData Cardiff Meetup": "Cardiff, UK",
+    "PyData Leeds": "Leeds, UK",
+    "PyData London Meetup": "London, UK"
+  },
+  "coords": {
+    "London, UK": {
+      "lat": 51.51,
+      "lon": -0.13,
+      "display_name": "London, Greater London, England"
+    },
+    "Bucharest, Romania": {
+      "lat": 44.43225,
+      "lon": 26.10626,
+      "display_name": "Bucuresti, Romania"
+    },
+    "Boston, Massachusetts, USA": {
+      "lat": 42.36,
+      "lon": -71.06,
+      "display_name": "Boston, MA, USA"
+    },
+    "Surrey": {
+      "lat": 51.2715316,
+      "lon": -0.3414524,
+      "display_name": "Surrey, England, United Kingdom"
+    },
+    "Milton Keynes": {
+      "lat": 52.0406502,
+      "lon": -0.7594092,
+      "display_name": "Milton Keynes, City of Milton Keynes, England, United Kingdom"
+    },
+    "Cambridge, UK": {
+      "lat": 52.2055314,
+      "lon": 0.1186637,
+      "display_name": "Cambridge, Cambridgeshire, Cambridgeshire and Peterborough, England, United Kingdom"
+    },
+    "Kent": {
+      "lat": 51.2070749,
+      "lon": 0.7210362,
+      "display_name": "Kent, England, United Kingdom"
+    },
+    "Southampton": {
+      "lat": 50.9025349,
+      "lon": -1.404189,
+      "display_name": "Southampton, England, United Kingdom"
+    },
+    "Leicester": {
+      "lat": 52.6362,
+      "lon": -1.1331969,
+      "display_name": "Leicester, City of Leicester, England, LE1 5YA, United Kingdom"
+    },
+    "Katsina, Nigeria": {
+      "lat": 12.5630825,
+      "lon": 7.6207063,
+      "display_name": "Katsina, Nigeria"
+    },
+    "Norwich": {
+      "lat": 52.6285576,
+      "lon": 1.2923954,
+      "display_name": "Norwich, Norfolk, England, United Kingdom"
+    },
+    "Birmingham, UK": {
+      "lat": 52.4796992,
+      "lon": -1.9026911,
+      "display_name": "Birmingham, West Midlands, England, United Kingdom"
+    },
+    "Bristol, UK": {
+      "lat": 51.4538022,
+      "lon": -2.5972985,
+      "display_name": "Bristol, City of Bristol, West of England, England, United Kingdom"
+    },
+    "Wolverhampton": {
+      "lat": 52.5847651,
+      "lon": -2.127567,
+      "display_name": "Wolverhampton, West Midlands, England, United Kingdom"
+    },
+    "Cardiff, UK": {
+      "lat": 51.4816546,
+      "lon": -3.1791934,
+      "display_name": "Cardiff, Cymru / Wales, CF10 2AF, United Kingdom"
+    },
+    "Hull": {
+      "lat": 53.7623863,
+      "lon": -0.3301214,
+      "display_name": "Kingston upon Hull, Hull and East Yorkshire, England, United Kingdom"
+    },
+    "Exeter": {
+      "lat": 50.7256138,
+      "lon": -3.5269209,
+      "display_name": "Exeter, Devon, Devon and Torbay, England, United Kingdom"
+    },
+    "Manchester, UK": {
+      "lat": 53.4794892,
+      "lon": -2.2451148,
+      "display_name": "Manchester, Greater Manchester, England, United Kingdom"
+    },
+    "Huddersfield": {
+      "lat": 53.6466645,
+      "lon": -1.7822482,
+      "display_name": "Huddersfield, Kirklees, West Yorkshire, England, HD1 2AN, United Kingdom"
+    },
+    "Leeds, UK": {
+      "lat": 53.7974185,
+      "lon": -1.5437941,
+      "display_name": "Leeds, West Yorkshire, England, United Kingdom"
+    },
+    "Bradford": {
+      "lat": 53.7944229,
+      "lon": -1.7519186,
+      "display_name": "Bradford, West Yorkshire, England, United Kingdom"
+    },
+    "Brussels, Belgium": {
+      "lat": 50.8467372,
+      "lon": 4.352493,
+      "display_name": "Bruxelles - Brussel, Brussel-Hoofdstad - Bruxelles-Capitale, R\u00e9gion de Bruxelles-Capitale - Brussels Hoofdstedelijk Gewest, Belgi\u00eb / Belgique / Belgien"
+    },
+    "Paris": {
+      "lat": 48.8534951,
+      "lon": 2.3483915,
+      "display_name": "Paris, \u00cele-de-France, France m\u00e9tropolitaine, France"
+    },
+    "Amsterdam": {
+      "lat": 52.3730796,
+      "lon": 4.8924534,
+      "display_name": "Amsterdam, Noord-Holland, Nederland"
+    },
+    "Cornwall": {
+      "lat": 50.416667,
+      "lon": -4.75,
+      "display_name": "Cornwall, England, United Kingdom"
+    },
+    "Eindhoven": {
+      "lat": 51.4392648,
+      "lon": 5.478633,
+      "display_name": "Eindhoven, Noord-Brabant, Nederland"
+    },
+    "Dublin, Ireland": {
+      "lat": 53.3493795,
+      "lon": -6.2605593,
+      "display_name": "Dublin, County Dublin, Leinster, \u00c9ire / Ireland"
+    },
+    "Dortmund, Germany": {
+      "lat": 51.5142273,
+      "lon": 7.4652789,
+      "display_name": "Dortmund, Nordrhein-Westfalen, Deutschland"
+    },
+    "Glasgow": {
+      "lat": 55.861155,
+      "lon": -4.2501687,
+      "display_name": "Glasgow, Glasgow City, Alba / Scotland, G2 1AL, United Kingdom"
+    },
+    "Frankfurt, Germany": {
+      "lat": 50.1106444,
+      "lon": 8.6820917,
+      "display_name": "Frankfurt am Main, Hessen, Deutschland"
+    },
+    "Heidelberg, Germany": {
+      "lat": 49.4093582,
+      "lon": 8.694724,
+      "display_name": "Heidelberg, Baden-W\u00fcrttemberg, Deutschland"
+    },
+    "Hamburg": {
+      "lat": 53.550341,
+      "lon": 10.000654,
+      "display_name": "Hamburg, Deutschland"
+    },
+    "Zurich": {
+      "lat": 47.3744489,
+      "lon": 8.5410422,
+      "display_name": "Z\u00fcrich, Bezirk Z\u00fcrich, Z\u00fcrich, Schweiz/Suisse/Svizzera/Svizra"
+    },
+    "Valais": {
+      "lat": 46.2303063,
+      "lon": 7.6605757,
+      "display_name": "Valais/Wallis, Schweiz/Suisse/Svizzera/Svizra"
+    },
+    "Munich": {
+      "lat": 48.1371079,
+      "lon": 11.5753822,
+      "display_name": "M\u00fcnchen, Bayern, Deutschland"
+    },
+    "Berlin": {
+      "lat": 52.5173885,
+      "lon": 13.3951309,
+      "display_name": "Berlin, Deutschland"
+    },
+    "Copenhagen, Denmark": {
+      "lat": 55.6867243,
+      "lon": 12.5700724,
+      "display_name": "K\u00f8benhavn, K\u00f8benhavns Kommune, Region Hovedstaden, 1357, Danmark"
+    },
+    "Copenhagen": {
+      "lat": 55.6867243,
+      "lon": 12.5700724,
+      "display_name": "K\u00f8benhavn, K\u00f8benhavns Kommune, Region Hovedstaden, 1357, Danmark"
+    },
+    "Milano": {
+      "lat": 45.4641943,
+      "lon": 9.1896346,
+      "display_name": "Milano, Lombardia, Italia"
+    },
+    "Prague": {
+      "lat": 50.0874654,
+      "lon": 14.4212535,
+      "display_name": "Praha, \u010cesko"
+    },
+    "Venice": {
+      "lat": 45.4371908,
+      "lon": 12.3345898,
+      "display_name": "Venezia, Veneto, 30121-30176, Italia"
+    },
+    "Ljubljana": {
+      "lat": 46.0500268,
+      "lon": 14.5069289,
+      "display_name": "Ljubljana, Upravna Enota Ljubljana, Slovenija"
+    },
+    "Bydgoszcz": {
+      "lat": 53.1219648,
+      "lon": 18.0002529,
+      "display_name": "Bydgoszcz, wojew\u00f3dztwo kujawsko-pomorskie, Polska"
+    },
+    "Madrid": {
+      "lat": 40.416782,
+      "lon": -3.703507,
+      "display_name": "Madrid, Comunidad de Madrid, Espa\u00f1a"
+    },
+    "Slovakia & Bratislava": {
+      "lat": 48.1559178,
+      "lon": 17.1313541,
+      "display_name": "Bratislava, Bratislavsk\u00fd kraj, Slovensko"
+    },
+    "Gdansk, Poland": {
+      "lat": 54.3482907,
+      "lon": 18.6540233,
+      "display_name": "Gda\u0144sk, wojew\u00f3dztwo pomorskie, Polska"
+    },
+    "Valencia": {
+      "lat": 39.4697065,
+      "lon": -0.3763353,
+      "display_name": "Val\u00e8ncia, Comarca de Val\u00e8ncia, Val\u00e8ncia / Valencia, Comunitat Valenciana, Espa\u00f1a"
+    },
+    "Eivissa/Ibiza": {
+      "lat": 38.9743901,
+      "lon": 1.4197463,
+      "display_name": "Eivissa, Illes Balears, Espa\u00f1a"
+    },
+    "Stockholm": {
+      "lat": 59.3251172,
+      "lon": 18.0710935,
+      "display_name": "Stockholm, Stockholms kommun, Stockholms l\u00e4n, 111 29, Sverige"
+    },
+    "Roma Capitale": {
+      "lat": 41.8933203,
+      "lon": 12.4829321,
+      "display_name": "Roma, Roma Capitale, Lazio, Italia"
+    },
+    "Rome": {
+      "lat": 41.8933203,
+      "lon": 12.4829321,
+      "display_name": "Roma, Roma Capitale, Lazio, Italia"
+    },
+    "Warsaw": {
+      "lat": 52.2333742,
+      "lon": 21.0711489,
+      "display_name": "Warszawa, wojew\u00f3dztwo mazowieckie, Polska"
+    },
+    "Lisbon": {
+      "lat": 38.7077507,
+      "lon": -9.1365919,
+      "display_name": "Lisboa, Portugal"
+    },
+    "Granada, Spain": {
+      "lat": 37.1734995,
+      "lon": -3.5995337,
+      "display_name": "Granada, Comarca de la Vega de Granada, Granada, Andaluc\u00eda, Espa\u00f1a"
+    },
+    "Malaga": {
+      "lat": 36.7213028,
+      "lon": -4.4216366,
+      "display_name": "M\u00e1laga, M\u00e1laga-Costa del Sol, M\u00e1laga, Andaluc\u00eda, Espa\u00f1a"
+    },
+    "Beograd": {
+      "lat": 44.8153318,
+      "lon": 20.4456588,
+      "display_name": "\u0411\u0435\u043e\u0433\u0440\u0430\u0434, \u0413\u0440\u0430\u0434 \u0411\u0435\u043e\u0433\u0440\u0430\u0434, \u0426\u0435\u043d\u0442\u0440\u0430\u043b\u043d\u0430 \u0421\u0440\u0431\u0438\u0458\u0430, \u0421\u0440\u0431\u0438\u0458\u0430"
+    },
+    "Tallinn": {
+      "lat": 59.437242,
+      "lon": 24.7572693,
+      "display_name": "Tallinn, Harju maakond, Eesti"
+    },
+    "Cluj-Napoca": {
+      "lat": 46.769379,
+      "lon": 23.5899542,
+      "display_name": "Cluj-Napoca, Zona Metropolitan\u0103 Cluj, Cluj, Rom\u00e2nia"
+    },
+    "Helsinki": {
+      "lat": 60.1666204,
+      "lon": 24.9435408,
+      "display_name": "Helsinki, Helsingin seutukunta, Uusimaa, Manner-Suomi, Suomi / Finland"
+    },
+    "Sibiu": {
+      "lat": 45.7973912,
+      "lon": 24.1519202,
+      "display_name": "Sibiu, Rom\u00e2nia"
+    },
+    "Skopje": {
+      "lat": 41.9961816,
+      "lon": 21.4319213,
+      "display_name": "\u0421\u043a\u043e\u043f\u0458\u0435, \u041e\u043f\u0448\u0442\u0438\u043d\u0430 \u0426\u0435\u043d\u0442\u0430\u0440, \u0413\u0440\u0430\u0434 \u0421\u043a\u043e\u043f\u0458\u0435, \u0421\u0435\u0432\u0435\u0440\u043d\u0430 \u041c\u0430\u043a\u0435\u0434\u043e\u043d\u0438\u0458\u0430"
+    },
+    "Sofia": {
+      "lat": 42.6977028,
+      "lon": 23.3217359,
+      "display_name": "\u0421\u043e\u0444\u0438\u044f, \u0421\u0440\u0435\u0434\u0435\u0446, \u0421\u0442\u043e\u043b\u0438\u0447\u043d\u0430, \u0421\u043e\u0444\u0438\u044f-\u0433\u0440\u0430\u0434, \u0411\u044a\u043b\u0433\u0430\u0440\u0438\u044f"
+    },
+    "Piraeus": {
+      "lat": 37.9431594,
+      "lon": 23.6470593,
+      "display_name": "\u03a0\u03b5\u03b9\u03c1\u03b1\u03b9\u03ac\u03c2, \u0394\u03ae\u03bc\u03bf\u03c2 \u03a0\u03b5\u03b9\u03c1\u03b1\u03b9\u03ce\u03c2, \u03a0\u03b5\u03c1\u03b9\u03c6\u03b5\u03c1\u03b5\u03b9\u03b1\u03ba\u03ae \u0395\u03bd\u03cc\u03c4\u03b7\u03c4\u03b1 \u03a0\u03b5\u03b9\u03c1\u03b1\u03b9\u03ce\u03c2, \u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b1 \u0391\u03c4\u03c4\u03b9\u03ba\u03ae\u03c2, \u0391\u03c0\u03bf\u03ba\u03b5\u03bd\u03c4\u03c1\u03c9\u03bc\u03ad\u03bd\u03b7 \u0394\u03b9\u03bf\u03af\u03ba\u03b7\u03c3\u03b7 \u0391\u03c4\u03c4\u03b9\u03ba\u03ae\u03c2, 185 35, \u0395\u03bb\u03bb\u03ac\u03c2"
+    },
+    "Athens, Greece": {
+      "lat": 37.9755648,
+      "lon": 23.7348324,
+      "display_name": "\u0391\u03b8\u03ae\u03bd\u03b1, \u0394\u03ae\u03bc\u03bf\u03c2 \u0391\u03b8\u03b7\u03bd\u03b1\u03af\u03c9\u03bd, \u03a0\u03b5\u03c1\u03b9\u03c6\u03b5\u03c1\u03b5\u03b9\u03b1\u03ba\u03ae \u0395\u03bd\u03cc\u03c4\u03b7\u03c4\u03b1 \u039a\u03b5\u03bd\u03c4\u03c1\u03b9\u03ba\u03bf\u03cd \u03a4\u03bf\u03bc\u03ad\u03b1 \u0391\u03b8\u03b7\u03bd\u03ce\u03bd, \u03a0\u03b5\u03c1\u03b9\u03c6\u03ad\u03c1\u03b5\u03b9\u03b1 \u0391\u03c4\u03c4\u03b9\u03ba\u03ae\u03c2, \u0391\u03c0\u03bf\u03ba\u03b5\u03bd\u03c4\u03c1\u03c9\u03bc\u03ad\u03bd\u03b7 \u0394\u03b9\u03bf\u03af\u03ba\u03b7\u03c3\u03b7 \u0391\u03c4\u03c4\u03b9\u03ba\u03ae\u03c2, 105 57, \u0395\u03bb\u03bb\u03ac\u03c2"
+    },
+    "Turkiye": {
+      "lat": 39.294076,
+      "lon": 35.2316631,
+      "display_name": "T\u00fcrkiye"
+    },
+    "Cyprus": {
+      "lat": 34.9174159,
+      "lon": 32.8899027,
+      "display_name": "\u039a\u03cd\u03c0\u03c1\u03bf\u03c2, \u039a\u03cd\u03c0\u03c1\u03bf\u03c2 - K\u0131br\u0131s"
+    },
+    "Tel Aviv": {
+      "lat": 32.0852997,
+      "lon": 34.7818064,
+      "display_name": "\u05ea\u05dc\u05be\u05d0\u05d1\u05d9\u05d1\u2013\u05d9\u05e4\u05d5, \u05e0\u05e4\u05ea \u05ea\u05dc \u05d0\u05d1\u05d9\u05d1, \u05de\u05d7\u05d5\u05d6 \u05ea\u05dc \u05d0\u05d1\u05d9\u05d1, \u05d9\u05e9\u05e8\u05d0\u05dc"
+    },
+    "Yerevan": {
+      "lat": 40.1777112,
+      "lon": 44.5126233,
+      "display_name": "\u0535\u0580\u0587\u0561\u0576, \u0540\u0561\u0575\u0561\u057d\u057f\u0561\u0576"
+    },
+    "Kaduna": {
+      "lat": 10.5182899,
+      "lon": 7.4359863,
+      "display_name": "Kaduna, Kabala, Kaduna North, Kaduna, 800211, Nigeria"
+    },
+    "Kuwait": {
+      "lat": 29.2733964,
+      "lon": 47.4979476,
+      "display_name": "\u0627\u0644\u0643\u0648\u064a\u062a"
+    },
+    "Bauchi": {
+      "lat": 10.3147618,
+      "lon": 9.8454417,
+      "display_name": "Bauchi, 740102, Nigeria"
+    },
+    "Abuja": {
+      "lat": 9.0643305,
+      "lon": 7.4892974,
+      "display_name": "Abuja, Municipal Area Council, Federal Capital Territory, 223140, Nigeria"
+    },
+    "Conakry": {
+      "lat": 9.5170602,
+      "lon": -13.6998434,
+      "display_name": "Conakry, Guin\u00e9e"
+    },
+    "Riyadh": {
+      "lat": 23.333333,
+      "lon": 45.333333,
+      "display_name": "\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0631\u064a\u0627\u0636, \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629"
+    },
+    "Lagos": {
+      "lat": 6.4550575,
+      "lon": 3.3941795,
+      "display_name": "Lagos, Lagos Island, Lagos, 100242, Nigeria"
+    },
+    "Warri": {
+      "lat": 5.5186186,
+      "lon": 5.7480196,
+      "display_name": "Warri, Effurun, Delta, Nigeria"
+    },
+    "Ughelli": {
+      "lat": 5.494188,
+      "lon": 5.995321,
+      "display_name": "Ughelli, Ughelli North, Delta, Nigeria"
+    },
+    "Montreal": {
+      "lat": 45.5031824,
+      "lon": -73.5698065,
+      "display_name": "Montr\u00e9al, Agglom\u00e9ration de Montr\u00e9al, Montr\u00e9al (r\u00e9gion administrative), Qu\u00e9bec, Canada"
+    },
+    "Dubai, UAE": {
+      "lat": 25.0742823,
+      "lon": 55.1885387,
+      "display_name": "\u062f\u0628\u064a, \u0627\u0644\u0625\u0645\u0627\u0631\u0627\u062a \u0627\u0644\u0639\u0631\u0628\u064a\u0629 \u0627\u0644\u0645\u062a\u062d\u062f\u0629"
+    },
+    "New York City, USA": {
+      "lat": 40.7127281,
+      "lon": -74.0060152,
+      "display_name": "New York, United States"
+    },
+    "Toronto": {
+      "lat": 43.6534817,
+      "lon": -79.3839347,
+      "display_name": "Toronto, Golden Horseshoe, Ontario, Canada"
+    },
+    "Washington DC, USA": {
+      "lat": 38.8950368,
+      "lon": -77.0365427,
+      "display_name": "Washington, District of Columbia, United States"
+    },
+    "Pittsburgh": {
+      "lat": 40.4406968,
+      "lon": -80.0025666,
+      "display_name": "Pittsburgh, Allegheny County, Pennsylvania, United States"
+    },
+    "Cleveland, Ohio, USA": {
+      "lat": 41.4996574,
+      "lon": -81.6936772,
+      "display_name": "Cleveland, Cuyahoga County, Ohio, United States"
+    },
+    "Charlottesville, Virginia, USA": {
+      "lat": 38.029306,
+      "lon": -78.4766781,
+      "display_name": "Charlottesville, Virginia, United States"
+    },
+    "Ann Arbor": {
+      "lat": 42.2813722,
+      "lon": -83.7484616,
+      "display_name": "Ann Arbor, Washtenaw County, Michigan, United States"
+    },
+    "Karachi": {
+      "lat": 24.8546842,
+      "lon": 67.0207055,
+      "display_name": "\u06a9\u0631\u0627\u0686\u06cc \u0688\u0648\u06cc\u0698\u0646, \u0633\u0646\u062f\u06be, \u067e\u0627\u06a9\u0633\u062a\u0627\u0646"
+    },
+    "Chicago": {
+      "lat": 41.8755616,
+      "lon": -87.6244212,
+      "display_name": "Chicago, South Chicago Township, Cook County, Illinois, United States"
+    },
+    "Jalandhar": {
+      "lat": 31.2922312,
+      "lon": 75.5678878,
+      "display_name": "Jalandhar, Punjab, India"
+    },
+    "Kampala": {
+      "lat": 0.3177137,
+      "lon": 32.5813539,
+      "display_name": "Kampala Capital City, Kampala, Uganda"
+    },
+    "Delhi": {
+      "lat": 28.6138954,
+      "lon": 77.2090057,
+      "display_name": "New Delhi, Delhi, India"
+    },
+    "St. Louis": {
+      "lat": 38.6254063,
+      "lon": -90.190009,
+      "display_name": "Saint Louis, Missouri, United States"
+    },
+    "Atlanta": {
+      "lat": 33.7544657,
+      "lon": -84.3898151,
+      "display_name": "Atlanta, Fulton County, Georgia, United States"
+    },
+    "Nairobi": {
+      "lat": -1.2890006,
+      "lon": 36.8172812,
+      "display_name": "Nairobi, Kenya"
+    },
+    "Calgary": {
+      "lat": 51.0456064,
+      "lon": -114.057541,
+      "display_name": "Calgary, Alberta, Canada"
+    },
+    "Indore": {
+      "lat": 22.7203616,
+      "lon": 75.8681996,
+      "display_name": "Indore, Juni Indore Tahsil, Indore, Madhya Pradesh, 452001, India"
+    },
+    "Port of Spain, Trinidad and Tobago": {
+      "lat": 10.6572678,
+      "lon": -61.5180173,
+      "display_name": "Port of Spain, Trinidad and Tobago"
+    },
+    "Miami, Florida, USA": {
+      "lat": 25.7741566,
+      "lon": -80.1935973,
+      "display_name": "Miami, Miami-Dade County, Florida, United States"
+    },
+    "Natal": {
+      "lat": -5.805398,
+      "lon": -35.2080905,
+      "display_name": "Natal, Regi\u00e3o Geogr\u00e1fica Imediata de Natal, Regi\u00e3o Geogr\u00e1fica Intermedi\u00e1ria de Natal, Rio Grande do Norte, Regi\u00e3o Nordeste, Brasil"
+    },
+    "Mumbai": {
+      "lat": 19.054999,
+      "lon": 72.8692035,
+      "display_name": "Mumbai, Mumbai Suburban, Maharashtra, 400051, India"
+    },
+    "Pune": {
+      "lat": 18.5213738,
+      "lon": 73.8545071,
+      "display_name": "Pune, Pune City, Pune, Maharashtra, 411001, India"
+    },
+    "Kathmandu": {
+      "lat": 27.708317,
+      "lon": 85.3205817,
+      "display_name": "\u0915\u093e\u0920\u092e\u093e\u0921\u094c\u0901 \u092e\u0939\u093e\u0928\u0917\u0930\u092a\u093e\u0932\u093f\u0915\u093e, \u0915\u093e\u0920\u092e\u093e\u0921\u094c\u0902 \u091c\u093f\u0932\u094d\u0932\u093e, \u092c\u093e\u0917\u092e\u0924\u0940 \u092a\u094d\u0930\u0926\u0947\u0936, \u0928\u0947\u092a\u093e\u0932"
+    },
+    "Par\u00e1": {
+      "lat": -4.7493933,
+      "lon": -52.8973006,
+      "display_name": "Par\u00e1, Regi\u00e3o Norte, Brasil"
+    },
+    "Tanzania": {
+      "lat": -6.5247123,
+      "lon": 35.7878438,
+      "display_name": "Tanzania"
+    },
+    "Denver": {
+      "lat": 39.7392364,
+      "lon": -104.984862,
+      "display_name": "Denver, Colorado, United States"
+    },
+    "Dallas, Texas, USA": {
+      "lat": 32.7762719,
+      "lon": -96.7968559,
+      "display_name": "Dallas, Dallas County, Texas, United States"
+    },
+    "Seattle": {
+      "lat": 47.6038321,
+      "lon": -122.330062,
+      "display_name": "Seattle, King County, Washington, United States"
+    },
+    "Northern Utah": {
+      "lat": 41.8121497,
+      "lon": -111.8117671,
+      "display_name": "Logan and Northern Canal, Hyde Park, Cache County, Utah, United States"
+    },
+    "Houston": {
+      "lat": 29.7589382,
+      "lon": -95.3676974,
+      "display_name": "Houston, Harris County, Texas, United States"
+    },
+    "Portland, Oregon, USA": {
+      "lat": 45.5202471,
+      "lon": -122.674194,
+      "display_name": "Portland, Multnomah County, Oregon, United States"
+    },
+    "Bangalore": {
+      "lat": 12.9767936,
+      "lon": 77.590082,
+      "display_name": "Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, India"
+    },
+    "Chennai, India": {
+      "lat": 13.0836939,
+      "lon": 80.270186,
+      "display_name": "Chennai Corporation, Chennai, Tamil Nadu, India"
+    },
+    "Chennai": {
+      "lat": 13.0836939,
+      "lon": 80.270186,
+      "display_name": "Chennai Corporation, Chennai, Tamil Nadu, India"
+    },
+    "Panam\u00e1": {
+      "lat": 8.559559,
+      "lon": -81.1308434,
+      "display_name": "Panam\u00e1"
+    },
+    "San Francisco Bay Area": {
+      "lat": 37.7884969,
+      "lon": -122.3558473,
+      "display_name": "San Francisco Bay Area, San Francisco, California, 94110, United States"
+    },
+    "Sri Lanka": {
+      "lat": 7.5554942,
+      "lon": 80.7137847,
+      "display_name": "Sri Lanka"
+    },
+    "Veracruz": {
+      "lat": 19.333333,
+      "lon": -96.666667,
+      "display_name": "Veracruz, M\u00e9xico"
+    },
+    "San Luis Obispo, California, USA": {
+      "lat": 35.3540209,
+      "lon": -120.375716,
+      "display_name": "San Luis Obispo County, California, United States"
+    },
+    "Chiang Mai": {
+      "lat": 18.7882778,
+      "lon": 98.9858802,
+      "display_name": "\u0e40\u0e17\u0e28\u0e1a\u0e32\u0e25\u0e19\u0e04\u0e23\u0e40\u0e0a\u0e35\u0e22\u0e07\u0e43\u0e2b\u0e21\u0e48, \u0e1f\u0e49\u0e32\u0e2e\u0e48\u0e32\u0e21, \u0e2d\u0e33\u0e40\u0e20\u0e2d\u0e40\u0e21\u0e37\u0e2d\u0e07\u0e40\u0e0a\u0e35\u0e22\u0e07\u0e43\u0e2b\u0e21\u0e48, \u0e08\u0e31\u0e07\u0e2b\u0e27\u0e31\u0e14\u0e40\u0e0a\u0e35\u0e22\u0e07\u0e43\u0e2b\u0e21\u0e48, \u0e1b\u0e23\u0e30\u0e40\u0e17\u0e28\u0e44\u0e17\u0e22"
+    },
+    "Belo Horizonte": {
+      "lat": -19.9227318,
+      "lon": -43.9450948,
+      "display_name": "Belo Horizonte, Regi\u00e3o Geogr\u00e1fica Imediata de Belo Horizonte, Regi\u00e3o Metropolitana de Belo Horizonte, Regi\u00e3o Geogr\u00e1fica Intermedi\u00e1ria de Belo Horizonte, Minas Gerais, Regi\u00e3o Sudeste, Brasil"
+    },
+    "Johannesburg": {
+      "lat": -26.205,
+      "lon": 28.049722,
+      "display_name": "Johannesburg, City of Johannesburg Metropolitan Municipality, Gauteng, 2001, South Africa"
+    },
+    "Rio de Janeiro, Brazil": {
+      "lat": -22.9110137,
+      "lon": -43.2093727,
+      "display_name": "Rio de Janeiro, Regi\u00e3o Geogr\u00e1fica Imediata do Rio de Janeiro, Regi\u00e3o Metropolitana do Rio de Janeiro, Regi\u00e3o Geogr\u00e1fica Intermedi\u00e1ria do Rio de Janeiro, Rio de Janeiro, Regi\u00e3o Sudeste, Brasil"
+    },
+    "S\u00e3o Paulo": {
+      "lat": -23.5506507,
+      "lon": -46.6333824,
+      "display_name": "S\u00e3o Paulo, Regi\u00e3o Imediata de S\u00e3o Paulo, Regi\u00e3o Metropolitana de S\u00e3o Paulo, Regi\u00e3o Geogr\u00e1fica Intermedi\u00e1ria de S\u00e3o Paulo, S\u00e3o Paulo, Regi\u00e3o Sudeste, Brasil"
+    },
+    "Guayaquil": {
+      "lat": -2.1900572,
+      "lon": -79.8868669,
+      "display_name": "Guayaquil, Guayas, Ecuador"
+    },
+    "Hong Kong": {
+      "lat": 22.2792968,
+      "lon": 114.1628907,
+      "display_name": "\u9999\u6e2f Hong Kong, \u4e2d\u56fd"
+    },
+    "Cape Town": {
+      "lat": -33.9288301,
+      "lon": 18.4172197,
+      "display_name": "Cape Town, City of Cape Town, Western Cape, 8001, South Africa"
+    },
+    "Mauritius": {
+      "lat": -20.2759451,
+      "lon": 57.5703566,
+      "display_name": "Mauritius / Maurice"
+    },
+    "Taipei": {
+      "lat": 25.0375198,
+      "lon": 121.5636796,
+      "display_name": "\u81fa\u5317\u5e02, \u81fa\u7063"
+    },
+    "Kuala Lumpur": {
+      "lat": 3.1516964,
+      "lon": 101.6942371,
+      "display_name": "Kuala Lumpur, 50100, Malaysia"
+    },
+    "Manila, Philippines": {
+      "lat": 14.5904492,
+      "lon": 120.9803621,
+      "display_name": "Manila, Capital District, Metro Manila, Philippines"
+    },
+    "Singapore": {
+      "lat": 1.357107,
+      "lon": 103.8194992,
+      "display_name": "Singapore"
+    },
+    "Buenos Aires": {
+      "lat": -34.6095579,
+      "lon": -58.3887904,
+      "display_name": "Buenos Aires, Comuna 1, Ciudad Aut\u00f3noma de Buenos Aires, Argentina"
+    },
+    "Brisbane": {
+      "lat": -27.4689623,
+      "lon": 153.0235009,
+      "display_name": "City of Brisbane, Queensland, Australia"
+    },
+    "Melbourne": {
+      "lat": -37.8142454,
+      "lon": 144.9631732,
+      "display_name": "Melbourne, City of Melbourne, Victoria, Australia"
+    },
+    "Sydney": {
+      "lat": -33.8698439,
+      "lon": 151.2082848,
+      "display_name": "Sydney, Council of the City of Sydney, New South Wales, Australia"
+    },
+    "\u00a0Bucharest": {
+      "lat": 44.4361414,
+      "lon": 26.102684,
+      "display_name": "Bucure\u0219ti, Rom\u00e2nia"
+    }
+  }
+}
