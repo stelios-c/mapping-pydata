@@ -36,11 +36,6 @@
     "PyData London Meetup": "London, UK"
   },
   "coords": {
-    "St. Louis": {
-      "lat": 38.6274,
-      "lon": 90.1982,
-      "display_name": "St. Louis, Missouri, USA"
-    },
     "London, UK": {
       "lat": 51.5074456,
       "lon": -0.1277653,
@@ -1050,6 +1045,11 @@
       "lat": 14.5904492,
       "lon": 120.9803621,
       "display_name": "Manila, Capital District, Metro Manila, Philippines"
+    },
+    "St. Louis": {
+      "lat": 38.6254063,
+      "lon": -90.190009,
+      "display_name": "Saint Louis, Missouri, United States"
     }
   }
 }

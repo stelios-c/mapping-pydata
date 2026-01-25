@@ -303,14 +303,13 @@ async def _(async_playwright, pd, uk_groups):
         
             await page.goto(group_url, wait_until='networkidle', timeout=30000)
         
-            await page.goto(group_url, wait_until='networkidle', timeout=30000)
-        
             details = await page.evaluate('''
                 () => {
                     const text = document.body.innerText;
                 
                     // Past events count
                     const pastMatch = text.match(/Past events\\s*(\\d+)/);
+                    const pastEventsCount = pastMatch ? parseInt(pastMatch[1]) : 0;
                 
                     // Organizer count from "and X others"
                     const organizerMatch = text.match(/and (\\d+) others/);
@@ -322,56 +321,56 @@ async def _(async_playwright, pd, uk_groups):
                                              organizerLink?.parentElement?.querySelector('img')?.alt?.replace('Photo of the user ', '') ||
                                              null;
                 
-                    // Get most recent past event date - try multiple approaches
+                    // Only look for last event date if there are past events
                     let lastEventDate = null;
-                
-                    // Approach 1: Find time element near past events
-                    const allTimeElements = document.querySelectorAll('time[datetime]');
-                    for (const timeEl of allTimeElements) {
-                        // Check if this is in a past event context
-                        const parent = timeEl.closest('a[href*="/events/"]');
-                        if (parent && parent.href.includes('eventOrigin=group_past_events')) {
-                            lastEventDate = timeEl.getAttribute('datetime');
-                            break;
+                    if (pastEventsCount > 0) {
+                        // Approach 1: Find time element near past events
+                        const allTimeElements = document.querySelectorAll('time[datetime]');
+                        for (const timeEl of allTimeElements) {
+                            const parent = timeEl.closest('a[href*="/events/"]');
+                            if (parent && parent.href.includes('eventOrigin=group_past_events')) {
+                                lastEventDate = timeEl.getAttribute('datetime');
+                                break;
+                            }
                         }
-                    }
-                
-                    // Approach 2: Look for past events section and get first date
-                    if (!lastEventDate) {
-                        const pastSection = document.evaluate(
-                            "//h2[contains(text(), 'Past events')]/following::time[@datetime][1]",
-                            document,
-                            null,
-                            XPathResult.FIRST_ORDERED_NODE_TYPE,
-                            null
-                        ).singleNodeValue;
-                        if (pastSection) {
-                            lastEventDate = pastSection.getAttribute('datetime');
+                    
+                        // Approach 2: Look for past events section and get first date
+                        if (!lastEventDate) {
+                            const pastSection = document.evaluate(
+                                "//h2[contains(text(), 'Past events')]/following::time[@datetime][1]",
+                                document,
+                                null,
+                                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                                null
+                            ).singleNodeValue;
+                            if (pastSection) {
+                                lastEventDate = pastSection.getAttribute('datetime');
+                            }
                         }
-                    }
-                
-                    // Approach 3: Get all event cards and find ones with past dates
-                    if (!lastEventDate) {
-                        const now = new Date();
-                        allTimeElements.forEach(timeEl => {
-                            if (!lastEventDate) {
-                                const dt = timeEl.getAttribute('datetime');
-                                if (dt) {
-                                    const eventDate = new Date(dt.split('[')[0]);
-                                    if (eventDate < now) {
-                                        lastEventDate = dt;
+                    
+                        // Approach 3: Get all event cards and find ones with past dates
+                        if (!lastEventDate) {
+                            const now = new Date();
+                            allTimeElements.forEach(timeEl => {
+                                if (!lastEventDate) {
+                                    const dt = timeEl.getAttribute('datetime');
+                                    if (dt) {
+                                        const eventDate = new Date(dt.split('[')[0]);
+                                        if (eventDate < now) {
+                                            lastEventDate = dt;
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
+                        }
                     }
                 
-                    // Check for upcoming events
-                    const hasUpcoming = text.includes('Upcoming events') || 
-                                       document.querySelector('a[href*="eventOrigin=group_upcoming_events"]') !== null;
+                    // Check for upcoming events - must have actual event cards, not just the section header
+                    const upcomingEventCards = document.querySelectorAll('a[href*="eventOrigin=group_upcoming_events"]');
+                    const hasUpcoming = upcomingEventCards.length > 0;
                 
                     return {
-                        past_events_count: pastMatch ? parseInt(pastMatch[1]) : null,
+                        past_events_count: pastEventsCount,
                         organizer_count: organizerCount,
                         primary_organizer: primaryOrganizer,
                         last_event_date: lastEventDate,
@@ -387,8 +386,8 @@ async def _(async_playwright, pd, uk_groups):
             details['events_url'] = f"{base}/events/"
             details['leaders_url'] = f"{base}/members/?op=leaders"
         
-            # Calculate days since last event
-            if details.get('last_event_date'):
+            # Calculate days since last event - only if we have past events AND a date
+            if details.get('past_events_count', 0) > 0 and details.get('last_event_date'):
                 try:
                     date_str = details['last_event_date'].split('[')[0]
                     last_event = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
