@@ -12,7 +12,30 @@ def _():
     import requests
     from bs4 import BeautifulSoup
     from playwright.async_api import async_playwright
-    return async_playwright, folium, mo
+
+    import json
+    from pathlib import Path
+    from geopy.geocoders import Nominatim
+    from geopy.extra.rate_limiter import RateLimiter
+
+    import marimo as mo
+    import pandas as pd
+    import asyncio
+
+    import shutil
+    import math
+    from pathlib import Path
+    return (
+        Nominatim,
+        Path,
+        RateLimiter,
+        async_playwright,
+        folium,
+        json,
+        math,
+        mo,
+        pd,
+    )
 
 
 @app.cell(hide_code=True)
@@ -26,37 +49,57 @@ def _(mo):
 
 
 @app.cell
-async def _(async_playwright):
+async def _(async_playwright, json):
     async def get_pydata_groups():
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             page = await browser.new_page(viewport={'width': 1280, 'height': 800})
             await page.goto('https://www.meetup.com/pro/pydata/')
             await page.wait_for_selector('[data-testid="group"]')
-        
+
             # Scroll and collect in browser context
+            # First, let's debug what's available in each card
             groups = await page.evaluate('''
                 async () => {
                     const allGroups = new Map();
                     let lastCount = 0;
                     let stableCount = 0;
-                
+
                     while (stableCount < 5) {
                         document.querySelectorAll('[data-testid="group"]').forEach(el => {
                             const link = el.querySelector('a');
                             const url = link?.href || '';
                             if (url && !allGroups.has(url)) {
-                                allGroups.set(url, {
-                                    name: el.querySelector('h3')?.textContent || '',
-                                    url: url
+                                const text = el.innerText;
+
+                                // Extract member count
+                                const memberMatch = text.match(/([\\d,]+)\\s*members?/i);
+
+                                // Extract rating (e.g., "4.7")
+                                const ratingMatch = text.match(/^([\\d.]+)$/m);
+
+                                // First line often has "City, NN" where NN is number of events
+                                const lines = text.split('\\n').map(l => l.trim()).filter(Boolean);
+                                const firstLine = lines[0] || '';
+                                const locationMatch = firstLine.match(/^([^,]+),\\s*(\\d+)$/);
+
+                                // Clean the URL (remove tracking params)
+                                const cleanUrl = url.split('?')[0];
+
+                                allGroups.set(cleanUrl, {
+                                    name: el.querySelector('h3')?.textContent?.trim() || '',
+                                    url: cleanUrl,
+                                    urlname: cleanUrl.match(/meetup\\.com\\/([^\\/]+)/)?.[1] || '',
+                                    members: memberMatch ? parseInt(memberMatch[1].replace(/,/g, '')) : null,
+                                    city: locationMatch ? locationMatch[1] : firstLine.split(',')[0],
+                                    rating: ratingMatch ? parseFloat(ratingMatch[1]) : null,
                                 });
                             }
                         });
-                    
-                        console.log("Collected: " + allGroups.size);
+
                         window.scrollTo(0, document.body.scrollHeight);
                         await new Promise(r => setTimeout(r, 2000));
-                    
+
                         if (allGroups.size === lastCount) stableCount++;
                         else stableCount = 0;
                         lastCount = allGroups.size;
@@ -69,22 +112,21 @@ async def _(async_playwright):
 
     groups = await get_pydata_groups()
     print(f"Found {len(groups)} groups")
+    if groups:
+        print("\nSample card data:")
+        print(json.dumps(groups[0], indent=2))
     return (groups,)
 
 
 @app.cell
-def _(groups):
-    print(groups)
+def _(groups, pd):
+    df = pd.DataFrame(groups)
+    df
     return
 
 
 @app.cell
-def _(groups):
-    import json
-    from pathlib import Path
-    from geopy.geocoders import Nominatim
-    from geopy.extra.rate_limiter import RateLimiter
-
+def _(Nominatim, Path, RateLimiter, groups, json):
     CACHE_FILE = Path("geocode_cache.json")
 
     def load_cache():
@@ -113,23 +155,23 @@ def _(groups):
     def geocode_groups(groups):
         """Geocode groups with caching"""
         cache = load_cache()
-    
+
         geolocator = Nominatim(user_agent="pydata_mapper", timeout=10)
         geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1.5)
-    
+
         results = []
         cache_hits = 0
         api_calls = 0
-    
+
         for group in groups:
             name = group['name']
             query = get_query_for_group(name, cache)
-        
+
             # Skip if marked as None
             if query is None:
                 print(f"⊘ {name} (skipped)")
                 continue
-        
+
             # Check coordinate cache
             if query in cache['coords']:
                 cached = cache['coords'][query]
@@ -142,7 +184,7 @@ def _(groups):
                 print(f"✓ {name} -> {query} ({cached['lat']:.2f}, {cached['lon']:.2f}) [cached]")
                 cache_hits += 1
                 continue
-        
+
             # Call Nominatim
             try:
                 location = geocode(query)
@@ -164,18 +206,25 @@ def _(groups):
                     print(f"✗ {name} -> {query} (not found)")
             except Exception as e:
                 print(f"✗ {name} -> {query} (error: {type(e).__name__})")
-    
+
         # Save updated cache
         save_cache(cache)
-    
+
         print(f"\nGeocoded {len(results)} of {len(groups)} groups")
         print(f"Cache hits: {cache_hits}, API calls: {api_calls}")
-    
+
         return results
 
     # Run geocoding
     groups_with_coords = geocode_groups(groups)
     return (groups_with_coords,)
+
+
+@app.cell
+def _(groups_with_coords, pd):
+    df_geo = pd.DataFrame(groups_with_coords)
+    df_geo
+    return
 
 
 @app.cell
@@ -214,15 +263,15 @@ def _(folium, groups_with_coords):
                 UK_BOUNDS['min_lon'] <= lon <= UK_BOUNDS['max_lon'])
 
     # Filter to UK groups using coordinates
-    _uk_groups = [_g for _g in groups_with_coords if is_in_uk(_g['lat'], _g['lon'])]
-    print(f"Found {len(_uk_groups)} UK groups:")
-    for _g in _uk_groups:
+    uk_groups = [_g for _g in groups_with_coords if is_in_uk(_g['lat'], _g['lon'])]
+    print(f"Found {len(uk_groups)} UK groups:")
+    for _g in uk_groups:
         print(f"  {_g['name']}")
 
     # Create UK-centered map
     _m = folium.Map(location=[54.5, -2], zoom_start=6)
 
-    for _g in _uk_groups:
+    for _g in uk_groups:
         folium.CircleMarker(
             location=[_g['lat'], _g['lon']],
             radius=10,
@@ -235,6 +284,298 @@ def _(folium, groups_with_coords):
         ).add_to(_m)
 
     _m
+    return (uk_groups,)
+
+
+@app.cell
+async def _(async_playwright, pd, uk_groups):
+    # =============================================================================
+    # CELL: Enrich UK groups with public details
+    # =============================================================================
+    from datetime import datetime, timezone
+
+    async def get_group_details_public(group_url):
+        """Get public data from main group page - no login required"""
+    
+        async with async_playwright() as p:
+            browser = await p.firefox.launch(headless=True)
+            page = await browser.new_page(viewport={'width': 1280, 'height': 800})
+        
+            await page.goto(group_url, wait_until='networkidle', timeout=30000)
+        
+            await page.goto(group_url, wait_until='networkidle', timeout=30000)
+        
+            details = await page.evaluate('''
+                () => {
+                    const text = document.body.innerText;
+                
+                    // Past events count
+                    const pastMatch = text.match(/Past events\\s*(\\d+)/);
+                
+                    // Organizer count from "and X others"
+                    const organizerMatch = text.match(/and (\\d+) others/);
+                    let organizerCount = organizerMatch ? parseInt(organizerMatch[1]) + 1 : null;
+                
+                    // Get visible organizer name
+                    const organizerLink = document.querySelector('a[href*="/members/?op=leaders"]');
+                    const primaryOrganizer = organizerLink?.previousElementSibling?.innerText?.trim() || 
+                                             organizerLink?.parentElement?.querySelector('img')?.alt?.replace('Photo of the user ', '') ||
+                                             null;
+                
+                    // Get most recent past event date - try multiple approaches
+                    let lastEventDate = null;
+                
+                    // Approach 1: Find time element near past events
+                    const allTimeElements = document.querySelectorAll('time[datetime]');
+                    for (const timeEl of allTimeElements) {
+                        // Check if this is in a past event context
+                        const parent = timeEl.closest('a[href*="/events/"]');
+                        if (parent && parent.href.includes('eventOrigin=group_past_events')) {
+                            lastEventDate = timeEl.getAttribute('datetime');
+                            break;
+                        }
+                    }
+                
+                    // Approach 2: Look for past events section and get first date
+                    if (!lastEventDate) {
+                        const pastSection = document.evaluate(
+                            "//h2[contains(text(), 'Past events')]/following::time[@datetime][1]",
+                            document,
+                            null,
+                            XPathResult.FIRST_ORDERED_NODE_TYPE,
+                            null
+                        ).singleNodeValue;
+                        if (pastSection) {
+                            lastEventDate = pastSection.getAttribute('datetime');
+                        }
+                    }
+                
+                    // Approach 3: Get all event cards and find ones with past dates
+                    if (!lastEventDate) {
+                        const now = new Date();
+                        allTimeElements.forEach(timeEl => {
+                            if (!lastEventDate) {
+                                const dt = timeEl.getAttribute('datetime');
+                                if (dt) {
+                                    const eventDate = new Date(dt.split('[')[0]);
+                                    if (eventDate < now) {
+                                        lastEventDate = dt;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                
+                    // Check for upcoming events
+                    const hasUpcoming = text.includes('Upcoming events') || 
+                                       document.querySelector('a[href*="eventOrigin=group_upcoming_events"]') !== null;
+                
+                    return {
+                        past_events_count: pastMatch ? parseInt(pastMatch[1]) : null,
+                        organizer_count: organizerCount,
+                        primary_organizer: primaryOrganizer,
+                        last_event_date: lastEventDate,
+                        has_upcoming_events: hasUpcoming
+                    };
+                }
+            ''')
+        
+            await browser.close()
+        
+            # Add URLs
+            base = group_url.rstrip('/')
+            details['events_url'] = f"{base}/events/"
+            details['leaders_url'] = f"{base}/members/?op=leaders"
+        
+            # Calculate days since last event
+            if details.get('last_event_date'):
+                try:
+                    date_str = details['last_event_date'].split('[')[0]
+                    last_event = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                    now = datetime.now(timezone.utc)
+                    details['days_since_last_event'] = (now - last_event).days
+                except:
+                    details['days_since_last_event'] = None
+            else:
+                details['days_since_last_event'] = None
+        
+            return details
+
+    print(f"Enriching {len(uk_groups)} UK groups...\n")
+
+    uk_groups_enriched = []
+    for i, group in enumerate(uk_groups):
+        print(f"[{i+1}/{len(uk_groups)}] {group['name']}...", end=' ')
+    
+        try:
+            details = await get_group_details_public(group['url'] + '/')
+            enriched = {**group, **details}
+            uk_groups_enriched.append(enriched)
+        
+            days = details.get('days_since_last_event')
+            days_str = f"{days} days ago" if days is not None else "never"
+            upcoming = "✓" if details.get('has_upcoming_events') else "✗"
+            print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}")
+        except Exception as e:
+            print(f"✗ {type(e).__name__}: {e}")
+            uk_groups_enriched.append(group)
+
+    print("\n" + "="*60)
+    print(f"Enriched {len(uk_groups_enriched)} UK groups")
+
+    # Create DataFrame
+    df_uk = pd.DataFrame(uk_groups_enriched)
+
+    # Reorder columns for readability
+    cols = ['name', 'city', 'members', 'past_events_count', 'days_since_last_event', 
+            'has_upcoming_events', 'organizer_count', 'events_url', 'leaders_url', 'lat', 'lon']
+    cols = [c for c in cols if c in df_uk.columns]
+    df_uk = df_uk[cols]
+
+    df_uk
+    return get_group_details_public, uk_groups_enriched
+
+
+@app.cell
+def _(folium, math, uk_groups_enriched):
+    # =============================================================================
+    # CELL: UK map with activity-based styling
+    # =============================================================================
+
+    def get_marker_style(group):
+        """Calculate fill color and opacity based on activity"""
+    
+        # Color: green if upcoming events
+        if group.get('has_upcoming_events'):
+            fill_color = '#22c55e'  # green
+        else:
+            fill_color = '#808080'
+    
+        # Opacity: logarithmic scale - drops quickly then levels off
+        days = group.get('days_since_last_event')
+        if days is None:
+            fill_opacity = 0.1  # No data - very transparent
+        else:
+            # Log scale: 0 days = 1.0, 7 days ≈ 0.6, 30 days ≈ 0.4, 90 days ≈ 0.3, 365 days ≈ 0.2
+            fill_opacity = max(0.15, 1.0 - (math.log1p(days) / math.log1p(365)))
+    
+        return fill_color, fill_opacity
+
+
+    # Create UK map
+    _m = folium.Map(location=[54.5, -2], zoom_start=6)
+
+    for _g in uk_groups_enriched:
+        fill_color, fill_opacity = get_marker_style(_g)
+    
+        # Build popup with details
+        _days = _g.get('days_since_last_event')
+        _days_str = f"{_days} days ago" if _days is not None else "Never"
+        _upcoming_str = "Yes ✓" if _g.get('has_upcoming_events') else "No"
+    
+        popup_html = f"""
+            <b><a href='{_g['url']}' target='_blank'>{_g['name']}</a></b><br>
+            📍 {_g.get('city', 'Unknown')}<br>
+            👥 {_g.get('members', '?')} members<br>
+            📅 {_g.get('past_events_count', 0)} past events<br>
+            ⏱️ Last event: {_days_str}<br>
+            🔜 Upcoming: {_upcoming_str}<br>
+            <a href='{_g.get('events_url', '')}' target='_blank'>Events</a> |
+            <a href='{_g.get('leaders_url', '')}' target='_blank'>Leaders</a>
+        """
+    
+        folium.CircleMarker(
+            location=[_g['lat'], _g['lon']],
+            radius=1*math.log(_g['members']),
+            popup=folium.Popup(popup_html, max_width=300),
+            tooltip=f"{_g['name']} ({_g.get('members', '?')} members)",
+            color=fill_color,
+            fill=True,
+            fill_color=fill_color,
+            fill_opacity=fill_opacity,
+            weight=2
+        ).add_to(_m)
+
+    _m
+    return (get_marker_style,)
+
+
+@app.cell
+async def _(get_group_details_public, groups_with_coords, pd):
+    # =============================================================================
+    # CELL: Enrich ALL groups with public details
+    # =============================================================================
+
+    print(f"Enriching {len(groups_with_coords)} groups worldwide...\n")
+
+    all_groups_enriched = []
+    for _i, _group in enumerate(groups_with_coords):
+        print(f"[{_i+1}/{len(groups_with_coords)}] {_group['name']}...", end=' ')
+    
+        try:
+            _details = await get_group_details_public(_group['url'] + '/')
+            _enriched = {**_group, **_details}
+            all_groups_enriched.append(_enriched)
+        
+            _days = _details.get('days_since_last_event')
+            _days_str = f"{_days} days ago" if _days is not None else "never"
+            _upcoming = "✓" if _details.get('has_upcoming_events') else "✗"
+            print(f"✓ {_details.get('past_events_count', 0) or 0} events, last: {_days_str}, upcoming: {_upcoming}")
+        except Exception as e:
+            print(f"✗ {type(e).__name__}: {e}")
+            all_groups_enriched.append(_group)
+
+    print("\n" + "="*60)
+    print(f"Enriched {len(all_groups_enriched)} groups")
+
+    # Create DataFrame
+    df_all = pd.DataFrame(all_groups_enriched)
+    df_all
+    return (all_groups_enriched,)
+
+
+@app.cell
+def _(all_groups_enriched, folium, get_marker_style, math):
+    # Create world map
+    world_map = folium.Map(location=[30, 0], zoom_start=2)
+
+    for _g in all_groups_enriched:
+        if 'lat' not in _g or 'lon' not in _g:
+            continue
+    
+        _fill_color, _fill_opacity = get_marker_style(_g)
+    
+        _days = _g.get('days_since_last_event')
+        _days_str = f"{_days} days ago" if _days is not None else "Never"
+        _upcoming_str = "Yes ✓" if _g.get('has_upcoming_events') else "No"
+    
+        _popup_html = f"""
+            <b><a href='{_g['url']}' target='_blank'>{_g['name']}</a></b><br>
+            📍 {_g.get('city', 'Unknown')}<br>
+            👥 {_g.get('members', '?')} members<br>
+            📅 {_g.get('past_events_count', 0) or 0} past events<br>
+            ⏱️ Last event: {_days_str}<br>
+            🔜 Upcoming: {_upcoming_str}<br>
+            <a href='{_g.get('events_url', '')}' target='_blank'>Events</a> |
+            <a href='{_g.get('leaders_url', '')}' target='_blank'>Leaders</a>
+        """
+    
+        _members = _g.get('members') or 10
+        _radius = max(5, math.log(_members) * 2)
+    
+        folium.CircleMarker(
+            location=[_g['lat'], _g['lon']],
+            radius=_radius,
+            popup=folium.Popup(_popup_html, max_width=300),
+            tooltip=f"{_g['name']} ({_members} members)",
+            color=_fill_color,
+            fill=True,
+            fill_color=_fill_color,
+            fill_opacity=_fill_opacity,
+            weight=2
+        ).add_to(world_map)
+
+    world_map
     return
 
 
