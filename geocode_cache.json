@@ -27,6 +27,7 @@
     "PyData SLO": "San Luis Obispo, California, USA",
     "PyData PDX": "Portland, Oregon, USA",
     "PyData NYC": "New York City, USA",
+    "PyData Cornwall": "Newquay, UK",
     "PyData Birmingham, UK": "Birmingham, UK",
     "PyData Cambridge": "Cambridge, UK",
     "PyData Manchester": "Manchester, UK",
@@ -1050,6 +1051,11 @@
       "lat": 38.6254063,
       "lon": -90.190009,
       "display_name": "Saint Louis, Missouri, United States"
+    },
+    "Newquay, UK": {
+      "lat": 50.4134414,
+      "lon": -5.0848836,
+      "display_name": "Newquay, Cornwall, England, United Kingdom"
     }
   }
 }
