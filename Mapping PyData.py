@@ -469,7 +469,7 @@ def _(folium, math, uk_groups_enriched):
         # Color: green if upcoming events
         if group.get('has_upcoming_events'):
             fill_color = '#22c55e'  # green
-            fill_opacity = 1.0
+            fill_opacity = 0.9
         else:
             fill_color = '#0000FF'
 
@@ -478,7 +478,7 @@ def _(folium, math, uk_groups_enriched):
             if days is None:
                 fill_opacity = 0.1  # No data - very transparent
             else:
-                fill_opacity = max(0.4, 1.0 - (math.log1p(days) / math.log1p(365)))
+                fill_opacity = max(0.4, 0.9 - (math.log1p(days) / math.log1p(365)))
 
         return fill_color, fill_opacity
 
