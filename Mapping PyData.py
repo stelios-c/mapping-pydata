@@ -58,7 +58,6 @@ async def _(async_playwright, json):
             await page.wait_for_selector('[data-testid="group"]')
 
             # Scroll and collect in browser context
-            # First, let's debug what's available in each card
             groups = await page.evaluate('''
                 async () => {
                     const allGroups = new Map();
@@ -217,13 +216,35 @@ def _(Nominatim, Path, RateLimiter, groups, json):
 
     # Run geocoding
     groups_with_coords = geocode_groups(groups)
-    return (groups_with_coords,)
+    return groups_with_coords, load_cache
 
 
 @app.cell
-def _(groups_with_coords, pd):
+def _(groups_with_coords, load_cache, pd):
+    # =============================================================================
+    # CELL: Add country field from geocode cache
+    # =============================================================================
+
+    cache = load_cache()
+
+    def get_country_from_cache(query):
+        """Extract country from cached display_name (last part of address)"""
+        if query in cache['coords']:
+            display_name = cache['coords'][query].get('display_name', '')
+            # Country is typically the last part after the final comma
+            parts = display_name.split(', ')
+            if parts:
+                return parts[-1].strip()
+        return None
+
+    # Add country to groups_with_coords
+    for _g in groups_with_coords:
+        _g['country'] = get_country_from_cache(_g.get('query', ''))
+
+    # Recreate DataFrame
     df_geo = pd.DataFrame(groups_with_coords)
-    df_geo
+
+    df_geo['country'].value_counts()
     return
 
 
@@ -284,6 +305,7 @@ def _(folium, groups_with_coords):
         ).add_to(_m)
 
     _m
+    _m.save('pydata_world_map.html')
     return (uk_groups,)
 
 
@@ -448,15 +470,14 @@ def _(folium, math, uk_groups_enriched):
         if group.get('has_upcoming_events'):
             fill_color = '#22c55e'  # green
         else:
-            fill_color = '#808080'
+            fill_color = '#0000FF'
     
         # Opacity: logarithmic scale - drops quickly then levels off
         days = group.get('days_since_last_event')
         if days is None:
             fill_opacity = 0.1  # No data - very transparent
         else:
-            # Log scale: 0 days = 1.0, 7 days ≈ 0.6, 30 days ≈ 0.4, 90 days ≈ 0.3, 365 days ≈ 0.2
-            fill_opacity = max(0.15, 1.0 - (math.log1p(days) / math.log1p(365)))
+            fill_opacity = max(0.4, 1.0 - (math.log1p(days) / math.log1p(365)))
     
         return fill_color, fill_opacity
 
@@ -469,6 +490,7 @@ def _(folium, math, uk_groups_enriched):
     
         # Build popup with details
         _days = _g.get('days_since_last_event')
+        _members = _g.get('members')
         _days_str = f"{_days} days ago" if _days is not None else "Never"
         _upcoming_str = "Yes ✓" if _g.get('has_upcoming_events') else "No"
     
@@ -482,17 +504,19 @@ def _(folium, math, uk_groups_enriched):
             <a href='{_g.get('events_url', '')}' target='_blank'>Events</a> |
             <a href='{_g.get('leaders_url', '')}' target='_blank'>Leaders</a>
         """
+
+        _radius = max(5, math.log(_members) * 2)
     
         folium.CircleMarker(
             location=[_g['lat'], _g['lon']],
-            radius=1*math.log(_g['members']),
+            radius=_radius,
             popup=folium.Popup(popup_html, max_width=300),
             tooltip=f"{_g['name']} ({_g.get('members', '?')} members)",
             color=fill_color,
             fill=True,
             fill_color=fill_color,
             fill_opacity=fill_opacity,
-            weight=2
+            weight=0
         ).add_to(_m)
 
     _m
@@ -530,11 +554,12 @@ async def _(get_group_details_public, groups_with_coords, pd):
     # Create DataFrame
     df_all = pd.DataFrame(all_groups_enriched)
     df_all
-    return (all_groups_enriched,)
+    return all_groups_enriched, df_all
 
 
 @app.cell
-def _(all_groups_enriched, folium, get_marker_style, math):
+def _(all_groups_enriched, df_all, folium, get_marker_style, math):
+    df_all.sort_values(by=['members'], ascending=True)
     # Create world map
     world_map = folium.Map(location=[30, 0], zoom_start=2)
 
@@ -571,10 +596,16 @@ def _(all_groups_enriched, folium, get_marker_style, math):
             fill=True,
             fill_color=_fill_color,
             fill_opacity=_fill_opacity,
-            weight=2
+            weight=0
         ).add_to(world_map)
 
     world_map
+    world_map.save('pydata_world_map_layers.html')
+    return
+
+
+@app.cell
+def _():
     return
 
 
