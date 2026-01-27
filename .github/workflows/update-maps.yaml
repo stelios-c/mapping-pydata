@@ -1,0 +1,36 @@
+name: Update PyData Maps
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-maps:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install pandas folium geopy playwright
+          playwright install firefox --with-deps
+          playwright install chromium --with-deps
+      
+      - name: Run update script
+        run: python PyDataMap.py
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add pydata_world_map.html pydata_world_map_layers.html pydata_groups.csv geocode_cache.json
+          git diff --quiet --staged || git commit -m "🗺️ Update maps $(date -u +'%Y-%m-%d')"
+          git push
