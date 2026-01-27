@@ -66,8 +66,93 @@ async def get_pydata_groups():
         await browser.close()
     return groups
 
-# Get public data from main group page - no login required
-async def get_group_details_public(group_url):
+async def get_group_details_public(page, group_url):
+    await page.goto(group_url, wait_until='networkidle', timeout=30000)
+
+    details = await page.evaluate('''
+        () => {
+            const text = document.body.innerText;
+
+            const pastMatch = text.match(/Past events\\s*(\\d+)/);
+            const pastEventsCount = pastMatch ? parseInt(pastMatch[1]) : 0;
+
+            const organizerMatch = text.match(/and (\\d+) others/);
+            let organizerCount = organizerMatch ? parseInt(organizerMatch[1]) + 1 : null;
+
+            const organizerLink = document.querySelector('a[href*="/members/?op=leaders"]');
+            const primaryOrganizer = organizerLink?.previousElementSibling?.innerText?.trim() || 
+                                     organizerLink?.parentElement?.querySelector('img')?.alt?.replace('Photo of the user ', '') ||
+                                     null;
+
+            let lastEventDate = null;
+            if (pastEventsCount > 0) {
+                const allTimeElements = document.querySelectorAll('time[datetime]');
+                for (const timeEl of allTimeElements) {
+                    const parent = timeEl.closest('a[href*="/events/"]');
+                    if (parent && parent.href.includes('eventOrigin=group_past_events')) {
+                        lastEventDate = timeEl.getAttribute('datetime');
+                        break;
+                    }
+                }
+
+                if (!lastEventDate) {
+                    const pastSection = document.evaluate(
+                        "//h2[contains(text(), 'Past events')]/following::time[@datetime][1]",
+                        document,
+                        null,
+                        XPathResult.FIRST_ORDERED_NODE_TYPE,
+                        null
+                    ).singleNodeValue;
+                    if (pastSection) {
+                        lastEventDate = pastSection.getAttribute('datetime');
+                    }
+                }
+
+                if (!lastEventDate) {
+                    const now = new Date();
+                    allTimeElements.forEach(timeEl => {
+                        if (!lastEventDate) {
+                            const dt = timeEl.getAttribute('datetime');
+                            if (dt) {
+                                const eventDate = new Date(dt.split('[')[0]);
+                                if (eventDate < now) {
+                                    lastEventDate = dt;
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            const upcomingEventCards = document.querySelectorAll('a[href*="eventOrigin=group_upcoming_events"]');
+            const hasUpcoming = upcomingEventCards.length > 0;
+
+            return {
+                past_events_count: pastEventsCount,
+                organizer_count: organizerCount,
+                primary_organizer: primaryOrganizer,
+                last_event_date: lastEventDate,
+                has_upcoming_events: hasUpcoming
+            };
+        }
+    ''')
+
+    base = group_url.rstrip('/')
+    details['events_url'] = f"{base}/events/"
+    details['leaders_url'] = f"{base}/members/?op=leaders"
+
+    if details.get('past_events_count', 0) > 0 and details.get('last_event_date'):
+        try:
+            date_str = details['last_event_date'].split('[')[0]
+            last_event = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            now = datetime.now(timezone.utc)
+            details['days_since_last_event'] = (now - last_event).days
+        except:
+            details['days_since_last_event'] = None
+    else:
+        details['days_since_last_event'] = None
+
+    return details
     async with async_playwright() as p:
         browser = await p.firefox.launch(headless=True)
         page = await browser.new_page(viewport={'width': 1280, 'height': 800})
@@ -300,7 +385,7 @@ def create_marker(g, style='orange'):
         popup = folium.Popup(build_popup_html(g), max_width=300)
         tooltip = f"{g['name']} ({members} members)"
     else:
-        color='#ee9041'
+        color="#ee6141"
         fill_color = '#ee9041'
         fill_opacity = 0.7
         radius = 8
@@ -413,7 +498,6 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_layer
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
-# Main entry point
 async def main():
     print("=" * 60)
     print("Fetching PyData groups from Meetup...")
@@ -435,21 +519,29 @@ async def main():
     print("=" * 60)
 
     all_groups_enriched = []
-    for i, group in enumerate(groups_with_coords):
-        print(f"[{i + 1}/{len(groups_with_coords)}] {group['name']}...", end=' ')
+    
+    # Reuse single browser for all enrichment
+    async with async_playwright() as p:
+        browser = await p.firefox.launch(headless=True)
+        page = await browser.new_page(viewport={'width': 1280, 'height': 800})
+        
+        for i, group in enumerate(groups_with_coords):
+            print(f"[{i + 1}/{len(groups_with_coords)}] {group['name']}...", end=' ')
 
-        try:
-            details = await get_group_details_public(group['url'] + '/')
-            enriched = {**group, **details}
-            all_groups_enriched.append(enriched)
+            try:
+                details = await get_group_details_public(page, group['url'] + '/')
+                enriched = {**group, **details}
+                all_groups_enriched.append(enriched)
 
-            days = details.get('days_since_last_event')
-            days_str = f"{days} days ago" if days is not None else "never"
-            upcoming = "✓" if details.get('has_upcoming_events') else "✗"
-            print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}")
-        except Exception as e:
-            print(f"✗ {type(e).__name__}: {e}")
-            all_groups_enriched.append(group)
+                days = details.get('days_since_last_event')
+                days_str = f"{days} days ago" if days is not None else "never"
+                upcoming = "✓" if details.get('has_upcoming_events') else "✗"
+                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}")
+            except Exception as e:
+                print(f"✗ {type(e).__name__}: {e}")
+                all_groups_enriched.append(group)
+        
+        await browser.close()
 
     print("\n" + "=" * 60)
     print("Generating maps...")
