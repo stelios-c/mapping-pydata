@@ -66,6 +66,7 @@ async def get_pydata_groups():
         await browser.close()
     return groups
 
+# Get public data from main group page - no login required
 async def get_group_details_public(page, group_url):
     await page.goto(group_url, wait_until='networkidle', timeout=30000)
 
@@ -153,98 +154,6 @@ async def get_group_details_public(page, group_url):
         details['days_since_last_event'] = None
 
     return details
-    async with async_playwright() as p:
-        browser = await p.firefox.launch(headless=True)
-        page = await browser.new_page(viewport={'width': 1280, 'height': 800})
-
-        await page.goto(group_url, wait_until='networkidle', timeout=30000)
-
-        details = await page.evaluate('''
-            () => {
-                const text = document.body.innerText;
-
-                const pastMatch = text.match(/Past events\\s*(\\d+)/);
-                const pastEventsCount = pastMatch ? parseInt(pastMatch[1]) : 0;
-
-                const organizerMatch = text.match(/and (\\d+) others/);
-                let organizerCount = organizerMatch ? parseInt(organizerMatch[1]) + 1 : null;
-
-                const organizerLink = document.querySelector('a[href*="/members/?op=leaders"]');
-                const primaryOrganizer = organizerLink?.previousElementSibling?.innerText?.trim() || 
-                                         organizerLink?.parentElement?.querySelector('img')?.alt?.replace('Photo of the user ', '') ||
-                                         null;
-
-                let lastEventDate = null;
-                if (pastEventsCount > 0) {
-                    const allTimeElements = document.querySelectorAll('time[datetime]');
-                    for (const timeEl of allTimeElements) {
-                        const parent = timeEl.closest('a[href*="/events/"]');
-                        if (parent && parent.href.includes('eventOrigin=group_past_events')) {
-                            lastEventDate = timeEl.getAttribute('datetime');
-                            break;
-                        }
-                    }
-
-                    if (!lastEventDate) {
-                        const pastSection = document.evaluate(
-                            "//h2[contains(text(), 'Past events')]/following::time[@datetime][1]",
-                            document,
-                            null,
-                            XPathResult.FIRST_ORDERED_NODE_TYPE,
-                            null
-                        ).singleNodeValue;
-                        if (pastSection) {
-                            lastEventDate = pastSection.getAttribute('datetime');
-                        }
-                    }
-
-                    if (!lastEventDate) {
-                        const now = new Date();
-                        allTimeElements.forEach(timeEl => {
-                            if (!lastEventDate) {
-                                const dt = timeEl.getAttribute('datetime');
-                                if (dt) {
-                                    const eventDate = new Date(dt.split('[')[0]);
-                                    if (eventDate < now) {
-                                        lastEventDate = dt;
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-
-                const upcomingEventCards = document.querySelectorAll('a[href*="eventOrigin=group_upcoming_events"]');
-                const hasUpcoming = upcomingEventCards.length > 0;
-
-                return {
-                    past_events_count: pastEventsCount,
-                    organizer_count: organizerCount,
-                    primary_organizer: primaryOrganizer,
-                    last_event_date: lastEventDate,
-                    has_upcoming_events: hasUpcoming
-                };
-            }
-        ''')
-
-        await browser.close()
-
-        base = group_url.rstrip('/')
-        details['events_url'] = f"{base}/events/"
-        details['leaders_url'] = f"{base}/members/?op=leaders"
-
-        if details.get('past_events_count', 0) > 0 and details.get('last_event_date'):
-            try:
-                date_str = details['last_event_date'].split('[')[0]
-                last_event = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                now = datetime.now(timezone.utc)
-                details['days_since_last_event'] = (now - last_event).days
-            except:
-                details['days_since_last_event'] = None
-        else:
-            details['days_since_last_event'] = None
-
-        return details
 
 # Load existing cache or return default structure
 def load_cache():
@@ -267,7 +176,7 @@ def get_query_for_group(name, cache):
         return cache['hints'][name]
     return name.replace('PyData ', '').replace(' Meetup', '').replace(' Group', '').replace('PyData', '')
 
-# Geocode groups with caching (all because Meetup city field is often missing/inaccurate)
+# Geocode groups with caching
 def geocode_groups(groups):
     cache = load_cache()
 
@@ -286,7 +195,6 @@ def geocode_groups(groups):
             print(f"⊘ {name} (skipped)")
             continue
 
-        # TODO Assumes meetup city never changes which may cause headaches later
         if query in cache['coords']:
             cached = cache['coords'][query]
             results.append({
@@ -337,8 +245,8 @@ def get_country_from_cache(query):
             return parts[-1].strip()
     return None
 
-# Calculate fill color and opacity based on activity
-def get_marker_style(group):
+# Calculate fill color and opacity for layers map (green/blue active styling)
+def get_marker_style_layers(group):
     if group.get('has_upcoming_events'):
         fill_color = '#22c55e'  # green
         fill_opacity = 0.9
@@ -349,7 +257,20 @@ def get_marker_style(group):
             fill_opacity = 0.1
         else:
             fill_opacity = max(0.4, 0.9 - (math.log1p(days) / math.log1p(365)))
+    return fill_color, fill_opacity
 
+# Calculate fill color and opacity for inactive map (red inactive, faint blue active)
+def get_marker_style_inactive(group):
+    days = group.get('days_since_last_event')
+    if group.get('has_upcoming_events') or (days is not None and days < 50):
+        fill_color = '#0000FF'  # blue
+        fill_opacity = 0.1
+    else:
+        fill_color = '#FF0000'  # red
+        if days is None:
+            fill_opacity = 0.9  # Never had events - bright red
+        else:
+            fill_opacity = min(0.9, 0.1 + (math.log1p(days) / math.log1p(365)) * 0.8)
     return fill_color, fill_opacity
 
 # Build popup HTML for a group
@@ -379,13 +300,16 @@ def create_marker(g, style='orange'):
     members = g.get('members') or 10
     
     if style == 'layers':
-        fill_color, fill_opacity = get_marker_style(g)
-        color = fill_color
+        fill_color, fill_opacity = get_marker_style_layers(g)
+        radius = max(5, math.log(members) * 2)
+        popup = folium.Popup(build_popup_html(g), max_width=300)
+        tooltip = f"{g['name']} ({members} members)"
+    elif style == 'inactive':
+        fill_color, fill_opacity = get_marker_style_inactive(g)
         radius = max(5, math.log(members) * 2)
         popup = folium.Popup(build_popup_html(g), max_width=300)
         tooltip = f"{g['name']} ({members} members)"
     else:
-        color="#ee6141"
         fill_color = '#ee9041'
         fill_opacity = 0.7
         radius = 8
@@ -397,7 +321,7 @@ def create_marker(g, style='orange'):
         radius=radius,
         popup=popup,
         tooltip=tooltip,
-        color=color,
+        color=fill_color,
         fill=True,
         fill_color=fill_color,
         fill_opacity=fill_opacity,
@@ -408,7 +332,6 @@ def create_marker(g, style='orange'):
 def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
     world_map = folium.Map(location=[30, 0], zoom_start=2)
 
-    # Group by rounded coordinates to find overlaps
     coord_groups = defaultdict(list)
     for g in groups_enriched:
         if 'lat' not in g or 'lon' not in g:
@@ -418,10 +341,8 @@ def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
 
     for key, groups in coord_groups.items():
         if len(groups) == 1:
-            # Single marker - add directly to map
             create_marker(groups[0], style='orange').add_to(world_map)
         else:
-            # Multiple overlapping markers - create a cluster just for these
             cluster = MarkerCluster(
                 options={
                     'spiderfyOnMaxZoom': True,
@@ -435,10 +356,9 @@ def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
     print(f"Saved {output_file}")
 
 # Create world map with activity-based styling (only cluster overlapping)
-def create_world_map_layers(groups_enriched, output_file='pydata_world_map_layers.html'):
+def create_world_map_layers(groups_enriched, output_file='pydata_world_map_active.html'):
     world_map = folium.Map(location=[30, 0], zoom_start=2)
 
-    # Group by rounded coordinates to find overlaps
     coord_groups = defaultdict(list)
     for g in groups_enriched:
         if 'lat' not in g or 'lon' not in g:
@@ -448,10 +368,8 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_layer
 
     for key, groups in coord_groups.items():
         if len(groups) == 1:
-            # Single marker - add directly to map
             create_marker(groups[0], style='layers').add_to(world_map)
         else:
-            # Multiple overlapping markers - create a cluster just for these
             cluster = MarkerCluster(
                 options={
                     'spiderfyOnMaxZoom': True,
@@ -463,9 +381,11 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_layer
 
     world_map.save(output_file)
     print(f"Saved {output_file}")
+
+# Create world map highlighting inactive groups (only cluster overlapping)
+def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_inactive.html'):
     world_map = folium.Map(location=[30, 0], zoom_start=2)
 
-    # Group by rounded coordinates to find overlaps
     coord_groups = defaultdict(list)
     for g in groups_enriched:
         if 'lat' not in g or 'lon' not in g:
@@ -473,16 +393,10 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_layer
         key = coord_key(g['lat'], g['lon'])
         coord_groups[key].append(g)
 
-    all_coords = []
-
     for key, groups in coord_groups.items():
-        all_coords.append([groups[0]['lat'], groups[0]['lon']])
-        
         if len(groups) == 1:
-            # Single marker - add directly to map
-            create_marker(groups[0], style='layers').add_to(world_map)
+            create_marker(groups[0], style='inactive').add_to(world_map)
         else:
-            # Multiple overlapping markers - create a cluster just for these
             cluster = MarkerCluster(
                 options={
                     'spiderfyOnMaxZoom': True,
@@ -490,14 +404,12 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_layer
                 }
             ).add_to(world_map)
             for g in groups:
-                create_marker(g, style='layers').add_to(cluster)
-
-    if all_coords:
-        world_map.fit_bounds(all_coords)
+                create_marker(g, style='inactive').add_to(cluster)
 
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
+# Main entry point
 async def main():
     print("=" * 60)
     print("Fetching PyData groups from Meetup...")
@@ -547,11 +459,14 @@ async def main():
     print("Generating maps...")
     print("=" * 60)
 
-    # Simple orange markers (only cluster overlapping)
+    # Simple orange markers
     create_world_map(all_groups_enriched, 'pydata_world_map.html')
     
-    # Activity-layers markers (only cluster overlapping)
-    create_world_map_layers(all_groups_enriched, 'pydata_world_map_layers.html')
+    # Activity-styled markers (green/blue)
+    create_world_map_layers(all_groups_enriched, 'pydata_world_map_active.html')
+    
+    # Inactive-highlighted markers (red inactive, faint blue active)
+    create_world_map_inactive(all_groups_enriched, 'pydata_world_map_inactive.html')
 
     # Save enriched data as CSV
     df = pd.DataFrame(all_groups_enriched)
