@@ -262,7 +262,7 @@ def get_marker_style_layers(group):
 # Calculate fill color and opacity for inactive map (red inactive, faint blue active)
 def get_marker_style_inactive(group):
     days = group.get('days_since_last_event')
-    if group.get('has_upcoming_events') or (days is not None and days < 50):
+    if group.get('has_upcoming_events') or (days is not None and days <100):
         fill_color = '#0000FF'  # blue
         fill_opacity = 0.1
     else:

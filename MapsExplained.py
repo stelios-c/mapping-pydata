@@ -98,7 +98,7 @@ def _(MarkerCluster, folium, math, pd):
     # Style: Red inactive, faint blue active
     def get_marker_style_inactive(group):
         days = group.get('days_since_last_event')
-        is_active = group.get('has_upcoming_events') or (pd.notna(days) and days < 50)
+        is_active = group.get('has_upcoming_events') or (pd.notna(days) and days < 100)
 
         if is_active:
             return '#0000FF', 0.1  # faint blue
