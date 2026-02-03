@@ -409,17 +409,25 @@ def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_ina
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
-# Main entry point
+# Load cached enrichment data from CSV
+def load_enrichment_cache(csv_file='pydata_groups.csv'):
+    cache = {}
+    if Path(csv_file).exists():
+        df = pd.read_csv(csv_file)
+        for _, row in df.iterrows():
+            cache[row['url']] = row.to_dict()
+    return cache
+
 async def main():
     print("=" * 60)
     print("Fetching PyData groups from Meetup...")
-    print("=" * 60)
+    print("=" * 60, flush=True)
     groups = await get_pydata_groups()
-    print(f"Found {len(groups)} groups\n")
+    print(f"Found {len(groups)} groups\n", flush=True)
 
     print("=" * 60)
     print("Geocoding groups...")
-    print("=" * 60)
+    print("=" * 60, flush=True)
     groups_with_coords = geocode_groups(groups)
 
     # Add country field
@@ -428,9 +436,16 @@ async def main():
 
     print("\n" + "=" * 60)
     print(f"Enriching {len(groups_with_coords)} groups with event details...")
-    print("=" * 60)
+    print("=" * 60, flush=True)
+
+    # Load existing enrichment data as fallback cache
+    enrichment_cache = load_enrichment_cache()
+    print(f"Loaded {len(enrichment_cache)} groups from enrichment cache\n", flush=True)
 
     all_groups_enriched = []
+    fresh_count = 0
+    cached_count = 0
+    failed_count = 0
     
     # Reuse single browser for all enrichment
     async with async_playwright() as p:
@@ -438,7 +453,7 @@ async def main():
         page = await browser.new_page(viewport={'width': 1280, 'height': 800})
         
         for i, group in enumerate(groups_with_coords):
-            print(f"[{i + 1}/{len(groups_with_coords)}] {group['name']}...", end=' ')
+            print(f"[{i + 1}/{len(groups_with_coords)}] {group['name']}...", end=' ', flush=True)
 
             try:
                 details = await get_group_details_public(page, group['url'] + '/')
@@ -448,16 +463,37 @@ async def main():
                 days = details.get('days_since_last_event')
                 days_str = f"{days} days ago" if days is not None else "never"
                 upcoming = "✓" if details.get('has_upcoming_events') else "✗"
-                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}")
+                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}", flush=True)
+                fresh_count += 1
             except Exception as e:
-                print(f"✗ {type(e).__name__}: {e}")
-                all_groups_enriched.append(group)
+                # Try to use cached data
+                cached = enrichment_cache.get(group['url'])
+                if cached and 'past_events_count' in cached:
+                    # Merge cached enrichment with fresh group data
+                    enriched = {**group}
+                    for key in ['past_events_count', 'organizer_count', 'primary_organizer', 
+                                'last_event_date', 'has_upcoming_events', 'days_since_last_event',
+                                'events_url', 'leaders_url']:
+                        if key in cached and pd.notna(cached.get(key)):
+                            enriched[key] = cached[key]
+                    all_groups_enriched.append(enriched)
+                    
+                    days = enriched.get('days_since_last_event')
+                    days_str = f"{days} days ago" if days is not None and pd.notna(days) else "never"
+                    upcoming = "✓" if enriched.get('has_upcoming_events') else "✗"
+                    print(f"⟳ {enriched.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming} [cached]", flush=True)
+                    cached_count += 1
+                else:
+                    print(f"✗ {type(e).__name__} (no cache)", flush=True)
+                    all_groups_enriched.append(group)
+                    failed_count += 1
         
         await browser.close()
 
     print("\n" + "=" * 60)
+    print(f"Enrichment complete: {fresh_count} fresh, {cached_count} cached, {failed_count} failed")
     print("Generating maps...")
-    print("=" * 60)
+    print("=" * 60, flush=True)
 
     # Simple orange markers
     create_world_map(all_groups_enriched, 'pydata_world_map.html')
@@ -471,11 +507,11 @@ async def main():
     # Save enriched data as CSV
     df = pd.DataFrame(all_groups_enriched)
     df.to_csv('pydata_groups.csv', index=False)
-    print("Saved pydata_groups.csv")
+    print("Saved pydata_groups.csv", flush=True)
 
     print("\n" + "=" * 60)
     print("Done!")
-    print("=" * 60)
+    print("=" * 60, flush=True)
 
 if __name__ == "__main__":
     asyncio.run(main())
