@@ -328,6 +328,50 @@ def create_marker(g, style='orange'):
         weight=0
     )
 
+def add_hash_navigation(world_map):
+    hash_script = """
+    <script>
+    (function() {
+        function parseHash() {
+            var hash = window.location.hash;
+            if (hash) {
+                var parts = hash.replace('#', '').split('/');
+                if (parts.length === 3) {
+                    var zoom = parseInt(parts[0]);
+                    var lat = parseFloat(parts[1]);
+                    var lng = parseFloat(parts[2]);
+                    if (!isNaN(zoom) && !isNaN(lat) && !isNaN(lng)) {
+                        return {zoom: zoom, lat: lat, lng: lng};
+                    }
+                }
+            }
+            return null;
+        }
+        
+        var checkMap = setInterval(function() {
+            for (var key in window) {
+                if (window[key] instanceof L.Map) {
+                    var map = window[key];
+                    clearInterval(checkMap);
+                    var view = parseHash();
+                    if (view) {
+                        map.setView([view.lat, view.lng], view.zoom);
+                    }
+                    
+                    map.on('moveend', function() {
+                        var center = map.getCenter();
+                        var zoom = map.getZoom();
+                        history.replaceState(null, null, '#' + zoom + '/' + center.lat.toFixed(4) + '/' + center.lng.toFixed(4));
+                    });
+                    break;
+                }
+            }
+        }, 100);
+    })();
+    </script>
+    """
+    world_map.get_root().html.add_child(folium.Element(hash_script))
+
 # Create simple world map with orange circle markers (only cluster overlapping)
 def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
     world_map = folium.Map(location=[30, 0], zoom_start=2)
@@ -352,6 +396,7 @@ def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
             for g in groups:
                 create_marker(g, style='orange').add_to(cluster)
 
+    add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
@@ -379,6 +424,7 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_activ
             for g in groups:
                 create_marker(g, style='layers').add_to(cluster)
 
+    add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
@@ -406,6 +452,7 @@ def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_ina
             for g in groups:
                 create_marker(g, style='inactive').add_to(cluster)
 
+    add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
 

@@ -36,6 +36,24 @@ I am using [geopy](https://github.com/geopy/geopy) to geoencode group names to p
 
 If your group is shown in the wrong location you can raise an issue or a PR with an alias for your group (or manually edit the latitude and longitude in the coords section of the cache file).
 
+### How can I make versions of this map focused on a specific country or area?
+
+The maps support URL hash navigation in the format `#zoom/lat/lng`. Simply append a hash to any map URL to set the initial view.
+
+**Examples:**
+- [The UK](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#6/54.5/-2): `https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#6/54.5/-2`
+- [Europe](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/50/10): `https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/50/10`
+- [Continental US](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/39/-98): `https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/39/-98`
+- [India](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#5/20/78): `https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#5/20/78`
+- [Australia](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/-25/135): `https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/-25/135`
+- [Brazil](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/-15/-50): `https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html#4/-15/-50`
+
+**To find coordinates for your own view:**
+1. Open any of the maps
+2. Pan and zoom to your desired view
+3. The URL hash will automatically update as you move
+4. Copy the URL to share
+
 ## Contributing
 
 If you have an idea for how to improe this project please fork and raise PRs. [Contact Hugh](mailto:hughevans.dev) for all other inquiries. 
