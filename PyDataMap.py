@@ -15,6 +15,12 @@ from playwright.async_api import async_playwright
 
 CACHE_FILE = Path("geocode_cache.json")
 
+def get_cached_pydata_groups():
+    if Path("pydata_groups.csv").exists():
+        df = pd.read_csv("pydata_groups.csv")
+        return df.to_dict(orient='records')
+    return None
+
 # Scrape all PyData groups from meetup.com/pro/pydata
 async def get_pydata_groups():
     async with async_playwright() as p:
@@ -467,19 +473,39 @@ def load_enrichment_cache(csv_file='pydata_groups.csv'):
 
 async def main():
     print("=" * 60)
-    print("Fetching PyData groups from Meetup...")
-    print("=" * 60, flush=True)
-    groups = await get_pydata_groups()
-    print(f"Found {len(groups)} groups\n", flush=True)
-
+    print("Fetching PyData groups from cache...")
+    groups = get_cached_pydata_groups()
     print("=" * 60)
-    print("Geocoding groups...")
-    print("=" * 60, flush=True)
-    groups_with_coords = geocode_groups(groups)
 
-    # Add country field
-    for g in groups_with_coords:
-        g['country'] = get_country_from_cache(g.get('query', ''))
+    # TODO this is an ugly work around for automatically updating the list of groups
+    # (previously I was treating every group as a new group which was worse because sometimes the scrape would miss groups)
+    # This should be optimized further to only geocode and enrich truly new groups
+    print("Looking for new PyData groups on Meetup...")
+    new_groups = await get_pydata_groups()
+
+    if new_groups:
+        print(f"Found {len(new_groups)} new groups\n", flush=True)
+        
+        print("=" * 60, flush=True)
+        print("Geocoding new groups...")
+        groups_with_coords = geocode_groups(new_groups)
+        # Add country field
+        for g in groups_with_coords:
+            g['country'] = get_country_from_cache(g.get('query', ''))
+        
+        
+        print("=" * 60, flush=True)
+        print("Append new groups to cache...")
+        if groups is not None:
+            existing_urls = set(g['url'] for g in groups)
+            combined_groups = groups + [g for g in groups_with_coords if g['url'] not in existing_urls]
+        else:
+            combined_groups = groups_with_coords
+        df = pd.DataFrame(combined_groups)
+        df.to_csv('pydata_groups.csv', index=False)
+        
+        print("Reloading cache...")
+        groups = get_cached_pydata_groups()
 
     print("\n" + "=" * 60)
     print(f"Enriching {len(groups_with_coords)} groups with event details...")
