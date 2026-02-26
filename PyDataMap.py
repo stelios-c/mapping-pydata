@@ -506,6 +506,14 @@ async def main():
         
         print("Reloading cache...")
         groups = get_cached_pydata_groups()
+    
+    # TODO handle incomplete scrapes more elegantly than this
+    # Attempted a fix for this above but still didn't catch all cases where the scrape was incomplete, so added this final check to prevent
+    # generating maps with too few groups which would be misleading
+    print("\n" + "=" * 60)
+    if len(groups) < 135:
+        # Fail the GHA
+        raise Exception(f"Expected at least 135 groups in cache, found {len(groups)}. Scrape may have been incomplete.")
 
     print("\n" + "=" * 60)
     print(f"Enriching {len(groups_with_coords)} groups with event details...")
@@ -514,6 +522,8 @@ async def main():
     # Load existing enrichment data as fallback cache
     enrichment_cache = load_enrichment_cache()
     print(f"Loaded {len(enrichment_cache)} groups from enrichment cache\n", flush=True)
+
+    
 
     all_groups_enriched = []
     fresh_count = 0
