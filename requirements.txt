@@ -1,2 +1,5 @@
 marimo
 folium
+geopy
+playwright
+python-dotenv

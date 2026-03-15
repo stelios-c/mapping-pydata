@@ -15,6 +15,9 @@ from playwright.async_api import async_playwright
 
 CACHE_FILE = Path("geocode_cache.json")
 
+ESRI_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
+ESRI_ATTR = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+
 def get_cached_pydata_groups():
     if Path("pydata_groups.csv").exists():
         df = pd.read_csv("pydata_groups.csv")
@@ -268,7 +271,7 @@ def get_marker_style_layers(group):
 # Calculate fill color and opacity for inactive map (red inactive, faint blue active)
 def get_marker_style_inactive(group):
     days = group.get('days_since_last_event')
-    if group.get('has_upcoming_events') or (days is not None and days <100):
+    if group.get('has_upcoming_events') or (days is not None and days < 100):
         fill_color = '#0000FF'  # blue
         fill_opacity = 0.1
     else:
@@ -304,7 +307,7 @@ def coord_key(lat, lon, precision=2):
 # Create a circle marker for a group
 def create_marker(g, style='orange'):
     members = g.get('members') or 10
-    
+
     if style == 'layers':
         fill_color, fill_opacity = get_marker_style_layers(g)
         radius = max(5, math.log(members) * 2)
@@ -321,7 +324,7 @@ def create_marker(g, style='orange'):
         radius = 8
         popup = f"<a href='{g['url']}' target='_blank'>{g['name']}</a>"
         tooltip = g['name']
-    
+
     return folium.CircleMarker(
         location=[g['lat'], g['lon']],
         radius=radius,
@@ -378,9 +381,18 @@ def add_hash_navigation(world_map):
     """
     world_map.get_root().html.add_child(folium.Element(hash_script))
 
+def make_base_map(location=[30, 0], zoom_start=2):
+    world_map = folium.Map(location=location, zoom_start=zoom_start, tiles=None)
+    folium.TileLayer(
+        tiles=ESRI_TILE_URL,
+        attr=ESRI_ATTR,
+        name='Esri World Street Map',
+    ).add_to(world_map)
+    return world_map
+
 # Create simple world map with orange circle markers (only cluster overlapping)
 def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
-    world_map = folium.Map(location=[30, 0], zoom_start=2)
+    world_map = make_base_map()
 
     coord_groups = defaultdict(list)
     for g in groups_enriched:
@@ -408,7 +420,7 @@ def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
 
 # Create world map with activity-based styling (only cluster overlapping)
 def create_world_map_layers(groups_enriched, output_file='pydata_world_map_active.html'):
-    world_map = folium.Map(location=[30, 0], zoom_start=2)
+    world_map = make_base_map()
 
     coord_groups = defaultdict(list)
     for g in groups_enriched:
@@ -436,7 +448,7 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_activ
 
 # Create world map highlighting inactive groups (only cluster overlapping)
 def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_inactive.html'):
-    world_map = folium.Map(location=[30, 0], zoom_start=2)
+    world_map = make_base_map()
 
     coord_groups = defaultdict(list)
     for g in groups_enriched:
@@ -477,23 +489,18 @@ async def main():
     groups = get_cached_pydata_groups()
     print("=" * 60)
 
-    # TODO this is an ugly work around for automatically updating the list of groups
-    # (previously I was treating every group as a new group which was worse because sometimes the scrape would miss groups)
-    # This should be optimized further to only geocode and enrich truly new groups
     print("Looking for new PyData groups on Meetup...")
     new_groups = await get_pydata_groups()
 
     if new_groups:
         print(f"Found {len(new_groups)} new groups\n", flush=True)
-        
+
         print("=" * 60, flush=True)
         print("Geocoding new groups...")
         groups_with_coords = geocode_groups(new_groups)
-        # Add country field
         for g in groups_with_coords:
             g['country'] = get_country_from_cache(g.get('query', ''))
-        
-        
+
         print("=" * 60, flush=True)
         print("Append new groups to cache...")
         if groups is not None:
@@ -503,38 +510,30 @@ async def main():
             combined_groups = groups_with_coords
         df = pd.DataFrame(combined_groups)
         df.to_csv('pydata_groups.csv', index=False)
-        
+
         print("Reloading cache...")
         groups = get_cached_pydata_groups()
-    
-    # TODO handle incomplete scrapes more elegantly than this
-    # Attempted a fix for this above but still didn't catch all cases where the scrape was incomplete, so added this final check to prevent
-    # generating maps with too few groups which would be misleading
+
     print("\n" + "=" * 60)
     if len(groups) < 135:
-        # Fail the GHA
         raise Exception(f"Expected at least 135 groups in cache, found {len(groups)}. Scrape may have been incomplete.")
 
     print("\n" + "=" * 60)
     print(f"Enriching {len(groups_with_coords)} groups with event details...")
     print("=" * 60, flush=True)
 
-    # Load existing enrichment data as fallback cache
     enrichment_cache = load_enrichment_cache()
     print(f"Loaded {len(enrichment_cache)} groups from enrichment cache\n", flush=True)
-
-    
 
     all_groups_enriched = []
     fresh_count = 0
     cached_count = 0
     failed_count = 0
-    
-    # Reuse single browser for all enrichment
+
     async with async_playwright() as p:
         browser = await p.firefox.launch(headless=True)
         page = await browser.new_page(viewport={'width': 1280, 'height': 800})
-        
+
         for i, group in enumerate(groups):
             print(f"[{i + 1}/{len(groups)}] {group['name']}...", end=' ', flush=True)
 
@@ -549,18 +548,16 @@ async def main():
                 print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}", flush=True)
                 fresh_count += 1
             except Exception as e:
-                # Try to use cached data
                 cached = enrichment_cache.get(group['url'])
                 if cached and 'past_events_count' in cached:
-                    # Merge cached enrichment with fresh group data
                     enriched = {**group}
-                    for key in ['past_events_count', 'organizer_count', 'primary_organizer', 
+                    for key in ['past_events_count', 'organizer_count', 'primary_organizer',
                                 'last_event_date', 'has_upcoming_events', 'days_since_last_event',
                                 'events_url', 'leaders_url']:
                         if key in cached and pd.notna(cached.get(key)):
                             enriched[key] = cached[key]
                     all_groups_enriched.append(enriched)
-                    
+
                     days = enriched.get('days_since_last_event')
                     days_str = f"{days} days ago" if days is not None and pd.notna(days) else "never"
                     upcoming = "✓" if enriched.get('has_upcoming_events') else "✗"
@@ -570,7 +567,7 @@ async def main():
                     print(f"✗ {type(e).__name__} (no cache)", flush=True)
                     all_groups_enriched.append(group)
                     failed_count += 1
-        
+
         await browser.close()
 
     print("\n" + "=" * 60)
@@ -578,16 +575,10 @@ async def main():
     print("Generating maps...")
     print("=" * 60, flush=True)
 
-    # Simple orange markers
     create_world_map(all_groups_enriched, 'pydata_world_map.html')
-    
-    # Activity-styled markers (green/blue)
     create_world_map_layers(all_groups_enriched, 'pydata_world_map_active.html')
-    
-    # Inactive-highlighted markers (red inactive, faint blue active)
     create_world_map_inactive(all_groups_enriched, 'pydata_world_map_inactive.html')
 
-    # Save enriched data as CSV
     df = pd.DataFrame(all_groups_enriched)
     df.to_csv('pydata_groups.csv', index=False)
     print("Saved pydata_groups.csv", flush=True)
