@@ -535,8 +535,8 @@ async def main():
         browser = await p.firefox.launch(headless=True)
         page = await browser.new_page(viewport={'width': 1280, 'height': 800})
         
-        for i, group in enumerate(groups_with_coords):
-            print(f"[{i + 1}/{len(groups_with_coords)}] {group['name']}...", end=' ', flush=True)
+        for i, group in enumerate(groups):
+            print(f"[{i + 1}/{len(groups)}] {group['name']}...", end=' ', flush=True)
 
             try:
                 details = await get_group_details_public(page, group['url'] + '/')
