@@ -32,7 +32,7 @@ jobs:
       - name: Generate personal map
         env:
           STADIA_API_KEY: ${{ secrets.STADIA_API_KEY }}
-        run: python pydata_personal_map.py
+        run: python PersonalMap.py
       
       - name: Commit and push changes
         run: |
