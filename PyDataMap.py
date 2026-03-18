@@ -21,6 +21,8 @@ ESRI_ATTR = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Inte
 def get_cached_pydata_groups():
     if Path("pydata_groups.csv").exists():
         df = pd.read_csv("pydata_groups.csv")
+        if 'in_pro_network' not in df.columns:
+            df['in_pro_network'] = False
         return df.to_dict(orient='records')
     return None
 
@@ -73,6 +75,10 @@ async def get_pydata_groups():
             }
         ''')
         await browser.close()
+
+    for g in groups:
+        g['in_pro_network'] = True
+
     return groups
 
 # Get public data from main group page - no login required
@@ -390,89 +396,59 @@ def make_base_map(location=[30, 0], zoom_start=2):
     ).add_to(world_map)
     return world_map
 
+def _add_markers_to_map(world_map, groups_enriched, style):
+    coord_groups = defaultdict(list)
+    for g in groups_enriched:
+        if 'lat' not in g or 'lon' not in g:
+            continue
+        key = coord_key(g['lat'], g['lon'])
+        coord_groups[key].append(g)
+
+    for key, groups in coord_groups.items():
+        if len(groups) == 1:
+            create_marker(groups[0], style=style).add_to(world_map)
+        else:
+            cluster = MarkerCluster(
+                options={
+                    'spiderfyOnMaxZoom': True,
+                    'disableClusteringAtZoom': 12
+                }
+            ).add_to(world_map)
+            for g in groups:
+                create_marker(g, style=style).add_to(cluster)
+
 # Create simple world map with orange circle markers (only cluster overlapping)
 def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
     world_map = make_base_map()
-
-    coord_groups = defaultdict(list)
-    for g in groups_enriched:
-        if 'lat' not in g or 'lon' not in g:
-            continue
-        key = coord_key(g['lat'], g['lon'])
-        coord_groups[key].append(g)
-
-    for key, groups in coord_groups.items():
-        if len(groups) == 1:
-            create_marker(groups[0], style='orange').add_to(world_map)
-        else:
-            cluster = MarkerCluster(
-                options={
-                    'spiderfyOnMaxZoom': True,
-                    'disableClusteringAtZoom': 12
-                }
-            ).add_to(world_map)
-            for g in groups:
-                create_marker(g, style='orange').add_to(cluster)
-
+    _add_markers_to_map(world_map, groups_enriched, style='orange')
     add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
-# Create world map with activity-based styling (only cluster overlapping)
+# Create world map with activity-based styling
 def create_world_map_layers(groups_enriched, output_file='pydata_world_map_active.html'):
     world_map = make_base_map()
-
-    coord_groups = defaultdict(list)
-    for g in groups_enriched:
-        if 'lat' not in g or 'lon' not in g:
-            continue
-        key = coord_key(g['lat'], g['lon'])
-        coord_groups[key].append(g)
-
-    for key, groups in coord_groups.items():
-        if len(groups) == 1:
-            create_marker(groups[0], style='layers').add_to(world_map)
-        else:
-            cluster = MarkerCluster(
-                options={
-                    'spiderfyOnMaxZoom': True,
-                    'disableClusteringAtZoom': 12
-                }
-            ).add_to(world_map)
-            for g in groups:
-                create_marker(g, style='layers').add_to(cluster)
-
+    _add_markers_to_map(world_map, groups_enriched, style='layers')
     add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
-# Create world map highlighting inactive groups (only cluster overlapping)
+# Create world map highlighting inactive groups
 def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_inactive.html'):
     world_map = make_base_map()
-
-    coord_groups = defaultdict(list)
-    for g in groups_enriched:
-        if 'lat' not in g or 'lon' not in g:
-            continue
-        key = coord_key(g['lat'], g['lon'])
-        coord_groups[key].append(g)
-
-    for key, groups in coord_groups.items():
-        if len(groups) == 1:
-            create_marker(groups[0], style='inactive').add_to(world_map)
-        else:
-            cluster = MarkerCluster(
-                options={
-                    'spiderfyOnMaxZoom': True,
-                    'disableClusteringAtZoom': 12
-                }
-            ).add_to(world_map)
-            for g in groups:
-                create_marker(g, style='inactive').add_to(cluster)
-
+    _add_markers_to_map(world_map, groups_enriched, style='inactive')
     add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
+
+# Create world map showing only groups outside the Pro network
+def create_world_map_non_pro(groups_enriched, output_file='pydata_world_map_non_pro.html'):
+    non_pro = [g for g in groups_enriched if not g.get('in_pro_network', True)]
+    world_map = make_base_map()
+    _add_markers_to_map(world_map, non_pro, style='orange')
+    add_hash_navigation(world_map)
+    world_map.save(output_file)
+    print(f"Saved {output_file} ({len(non_pro)} non-Pro groups)")
 
 # Load cached enrichment data from CSV
 def load_enrichment_cache(csv_file='pydata_groups.csv'):
@@ -491,6 +467,8 @@ async def main():
 
     print("Looking for new PyData groups on Meetup...")
     new_groups = await get_pydata_groups()
+    pro_urls = {g['url'] for g in new_groups}
+    print(f"Found {len(new_groups)} groups in Pro network")
 
     if new_groups:
         print(f"Found {len(new_groups)} new groups\n", flush=True)
@@ -508,6 +486,15 @@ async def main():
             combined_groups = groups + [g for g in groups_with_coords if g['url'] not in existing_urls]
         else:
             combined_groups = groups_with_coords
+
+        # Update in_pro_network for all groups based on current scrape
+        for g in combined_groups:
+            was_pro = g.get('in_pro_network', False)
+            now_pro = g['url'] in pro_urls
+            if was_pro and not now_pro:
+                print(f"  ⚠️  No longer in Pro network: {g['name']}")
+            g['in_pro_network'] = now_pro
+
         df = pd.DataFrame(combined_groups)
         df.to_csv('pydata_groups.csv', index=False)
 
@@ -519,7 +506,7 @@ async def main():
         raise Exception(f"Expected at least 135 groups in cache, found {len(groups)}. Scrape may have been incomplete.")
 
     print("\n" + "=" * 60)
-    print(f"Enriching {len(groups_with_coords)} groups with event details...")
+    print(f"Enriching {len(groups)} groups with event details...")
     print("=" * 60, flush=True)
 
     enrichment_cache = load_enrichment_cache()
@@ -578,6 +565,7 @@ async def main():
     create_world_map(all_groups_enriched, 'pydata_world_map.html')
     create_world_map_layers(all_groups_enriched, 'pydata_world_map_active.html')
     create_world_map_inactive(all_groups_enriched, 'pydata_world_map_inactive.html')
+    create_world_map_non_pro(all_groups_enriched, 'pydata_world_map_non_pro.html')
 
     df = pd.DataFrame(all_groups_enriched)
     df.to_csv('pydata_groups.csv', index=False)

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_1eda40026b07f838b1c410b3487e208f {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+    <script>
+    (function() {
+        function parseHash() {
+            var hash = window.location.hash;
+            if (hash) {
+                var parts = hash.replace('#', '').split('/');
+                if (parts.length === 3) {
+                    var zoom = parseInt(parts[0]);
+                    var lat = parseFloat(parts[1]);
+                    var lng = parseFloat(parts[2]);
+                    if (!isNaN(zoom) && !isNaN(lat) && !isNaN(lng)) {
+                        return {zoom: zoom, lat: lat, lng: lng};
+                    }
+                }
+            }
+            return null;
+        }
+        
+        var checkMap = setInterval(function() {
+            for (var key in window) {
+                if (window[key] instanceof L.Map) {
+                    var map = window[key];
+                    clearInterval(checkMap);
+                    var view = parseHash();
+                    if (view) {
+                        map.setView([view.lat, view.lng], view.zoom);
+                    }
+                    
+                    map.on('moveend', function() {
+                        var center = map.getCenter();
+                        var zoom = map.getZoom();
+                        history.replaceState(null, null, '#' + zoom + '/' + center.lat.toFixed(4) + '/' + center.lng.toFixed(4));
+                    });
+                    break;
+                }
+            }
+        }, 100);
+    })();
+    </script>
+    
+    
+            <div class="folium-map" id="map_1eda40026b07f838b1c410b3487e208f" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_1eda40026b07f838b1c410b3487e208f = L.map(
+                "map_1eda40026b07f838b1c410b3487e208f",
+                {
+                    center: [30.0, 0.0],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 2,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_43a88311899935b3a6ec27938e551c13 = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "Tiles \u0026copy; Esri \u0026mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_43a88311899935b3a6ec27938e551c13.addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+            var circle_marker_1d485610765959e1a27420be3f588551 = L.circleMarker(
+                [55.9533456, -3.1883749],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_c648bbad0f52c71612a66a73da184bc3 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_9b54e373bc47c8e48214211556c27664 = $(`<div id="html_9b54e373bc47c8e48214211556c27664" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-edinburgh' target='_blank'>PyData Edinburgh</a></div>`)[0];
+                popup_c648bbad0f52c71612a66a73da184bc3.setContent(html_9b54e373bc47c8e48214211556c27664);
+            
+        
+
+        circle_marker_1d485610765959e1a27420be3f588551.bindPopup(popup_c648bbad0f52c71612a66a73da184bc3)
+        ;
+
+        
+    
+    
+            circle_marker_1d485610765959e1a27420be3f588551.bindTooltip(
+                `<div>
+                     PyData Edinburgh
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_b811bde4037cf283fce7aa3a94d78f44 = L.circleMarker(
+                [35.6768601, 139.7638947],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_8d8a78de19488521daa32373b3fe6dfd = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_508549a346f2486247cc4b80e4563fa7 = $(`<div id="html_508549a346f2486247cc4b80e4563fa7" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-tokyo' target='_blank'>PyData Tokyo</a></div>`)[0];
+                popup_8d8a78de19488521daa32373b3fe6dfd.setContent(html_508549a346f2486247cc4b80e4563fa7);
+            
+        
+
+        circle_marker_b811bde4037cf283fce7aa3a94d78f44.bindPopup(popup_8d8a78de19488521daa32373b3fe6dfd)
+        ;
+
+        
+    
+    
+            circle_marker_b811bde4037cf283fce7aa3a94d78f44.bindTooltip(
+                `<div>
+                     PyData Tokyo
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_f6840ae10ec87e3975dc5799e81f5dd1 = L.circleMarker(
+                [24.4538352, 54.3774014],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_6be0edcd215eb1ee893fe7669e460ede = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_65f88db5e42ba713605c10630bd042fe = $(`<div id="html_65f88db5e42ba713605c10630bd042fe" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-abu-dhabi' target='_blank'>PyData Abu Dhabi</a></div>`)[0];
+                popup_6be0edcd215eb1ee893fe7669e460ede.setContent(html_65f88db5e42ba713605c10630bd042fe);
+            
+        
+
+        circle_marker_f6840ae10ec87e3975dc5799e81f5dd1.bindPopup(popup_6be0edcd215eb1ee893fe7669e460ede)
+        ;
+
+        
+    
+    
+            circle_marker_f6840ae10ec87e3975dc5799e81f5dd1.bindTooltip(
+                `<div>
+                     PyData Abu Dhabi
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_c375748ecb810afce49fbb20fc9c16ea = L.circleMarker(
+                [50.0469432, 19.9971534],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_653d06b1751ab3b6e8a0503f6e31356d = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_aa94af6453616980e90e94ac3cb54eea = $(`<div id="html_aa94af6453616980e90e94ac3cb54eea" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-krakow' target='_blank'>PyData Krakow</a></div>`)[0];
+                popup_653d06b1751ab3b6e8a0503f6e31356d.setContent(html_aa94af6453616980e90e94ac3cb54eea);
+            
+        
+
+        circle_marker_c375748ecb810afce49fbb20fc9c16ea.bindPopup(popup_653d06b1751ab3b6e8a0503f6e31356d)
+        ;
+
+        
+    
+    
+            circle_marker_c375748ecb810afce49fbb20fc9c16ea.bindTooltip(
+                `<div>
+                     PyData Krakow
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_4e9220a738eea6a4d790793ab9cf86d7 = L.circleMarker(
+                [54.6870458, 25.2829111],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_bdb68dfb0c1ac3165e26ede426d2f8b0 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e18a6824ec2612ce08bd277241ad08ff = $(`<div id="html_e18a6824ec2612ce08bd277241ad08ff" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-vilnius' target='_blank'>PyData Vilnius</a></div>`)[0];
+                popup_bdb68dfb0c1ac3165e26ede426d2f8b0.setContent(html_e18a6824ec2612ce08bd277241ad08ff);
+            
+        
+
+        circle_marker_4e9220a738eea6a4d790793ab9cf86d7.bindPopup(popup_bdb68dfb0c1ac3165e26ede426d2f8b0)
+        ;
+
+        
+    
+    
+            circle_marker_4e9220a738eea6a4d790793ab9cf86d7.bindTooltip(
+                `<div>
+                     PyData Vilnius
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_e5a10fceafaebd45817f9f9da6812bf8 = L.circleMarker(
+                [52.4006632, 16.9197326],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_ec369331187372c482a6f7833115fb78 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_5da63e16424871273dd8410d0f50a5ac = $(`<div id="html_5da63e16424871273dd8410d0f50a5ac" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-poznan' target='_blank'>PyData Poznan</a></div>`)[0];
+                popup_ec369331187372c482a6f7833115fb78.setContent(html_5da63e16424871273dd8410d0f50a5ac);
+            
+        
+
+        circle_marker_e5a10fceafaebd45817f9f9da6812bf8.bindPopup(popup_ec369331187372c482a6f7833115fb78)
+        ;
+
+        
+    
+    
+            circle_marker_e5a10fceafaebd45817f9f9da6812bf8.bindTooltip(
+                `<div>
+                     PyData Poznan
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_84677c50c87fd5ed8509f337aeee3997 = L.circleMarker(
+                [47.5581077, 7.5878261],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_534065504d2b9976afd18c1a0325584b = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_669df7611e01a778f9b4ca499bf78dc5 = $(`<div id="html_669df7611e01a778f9b4ca499bf78dc5" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-basel' target='_blank'>PyData Basel</a></div>`)[0];
+                popup_534065504d2b9976afd18c1a0325584b.setContent(html_669df7611e01a778f9b4ca499bf78dc5);
+            
+        
+
+        circle_marker_84677c50c87fd5ed8509f337aeee3997.bindPopup(popup_534065504d2b9976afd18c1a0325584b)
+        ;
+
+        
+    
+    
+            circle_marker_84677c50c87fd5ed8509f337aeee3997.bindTooltip(
+                `<div>
+                     PyData Basel
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var circle_marker_6973ba0b33f180ed8b9a197c393fad6f = L.circleMarker(
+                [46.5218269, 6.6327025],
+                {"bubblingMouseEvents": true, "color": "#ee9041", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "#ee9041", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 8, "stroke": true, "weight": 0}
+            ).addTo(map_1eda40026b07f838b1c410b3487e208f);
+        
+    
+        var popup_e6ebd820d30fda7fdc14e3c07843f36c = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_e407ededee14bcf32af970f3f719672f = $(`<div id="html_e407ededee14bcf32af970f3f719672f" style="width: 100.0%; height: 100.0%;"><a href='https://www.meetup.com/pydata-lausanne/' target='_blank'>PyData Lausanne</a></div>`)[0];
+                popup_e6ebd820d30fda7fdc14e3c07843f36c.setContent(html_e407ededee14bcf32af970f3f719672f);
+            
+        
+
+        circle_marker_6973ba0b33f180ed8b9a197c393fad6f.bindPopup(popup_e6ebd820d30fda7fdc14e3c07843f36c)
+        ;
+
+        
+    
+    
+            circle_marker_6973ba0b33f180ed8b9a197c393fad6f.bindTooltip(
+                `<div>
+                     PyData Lausanne
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+</script>
+</html>

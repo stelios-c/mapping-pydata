@@ -12,7 +12,7 @@ load_dotenv()
 from PyDataMap import build_popup_html, add_hash_navigation
 
 
-ICON_DIR = Path("icons")
+ICON_DIR = Path("../../icons")
 
 
 def load_icon(path):
@@ -69,7 +69,7 @@ def should_skip_unvisited(g):
 
 
 def create_personal_map(output_file="pydata_personal_map.html"):
-    df = pd.read_csv("pydata_groups.csv")
+    df = pd.read_csv("../../pydata_groups.csv")
     groups = df.to_dict(orient="records")
 
     watercolor_url = (

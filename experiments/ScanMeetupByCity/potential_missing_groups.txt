@@ -1,0 +1,8 @@
+city	slug	url
+vilnius	pydata-vilnius	https://www.meetup.com/pydata-vilnius/ # Manually added
+poznan	pydata-poznan	https://www.meetup.com/pydata-poznan/ # Manually added 
+lancaster	pydata-lancaster	https://www.meetup.com/pydata-lancaster/ # Active, but no longer a pydata group
+karlsruhe	pydata-karlsruhe	https://www.meetup.com/pydata-karlsruhe/ # Already tracked
+basel	pydata-basel	https://www.meetup.com/pydata-basel/ # Manually added
+lancaster	pydata-lancaster	https://www.meetup.com/pydata-lancaster/ # Active, but no longer a pydata group
+lausanne	pydata-lausanne	https://www.meetup.com/pydata-lausanne/ # Manually added
