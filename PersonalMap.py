@@ -31,14 +31,14 @@ STATUS_ICONS = {
 # Values are (status, date, event_url) tuples
 # date is a string or None, event_url is a specific event link or None
 MY_GROUPS = {
-    "https://www.meetup.com/pydata-london-meetup":    ("spoken",    None,          None),
-    "https://www.meetup.com/meetup-group-djhiglzd":   ("unvisited", None,          None),  # PyData Glasgow
+    "https://www.meetup.com/pydata-london-meetup":     ("spoken",    None,          None),
+    "https://www.meetup.com/meetup-group-djhiglzd":    ("unvisited", None,          None),  # PyData Glasgow
     "https://www.meetup.com/pydataireland":            ("unvisited", None,          None),  # PyData Ireland
-    "https://www.meetup.com/pydata-bradford":          ("unvisited", None,          None),
-    "https://www.meetup.com/PyData-Manchester":        ("upcoming",  "2026-03-26",  None),
+    "https://www.meetup.com/pydata-bradford":          ("upcoming", "2026-05-29",   None),
+    "https://www.meetup.com/PyData-Manchester":        ("upcoming",  "2026-03-26",  "https://www.meetup.com/pydata-manchester/events/313770253/"),
     "https://www.meetup.com/pydata-leeds":             ("unvisited", None,          None),
     "https://www.meetup.com/pydata-huddersfield":      ("unvisited", None,          None),
-    "https://www.meetup.com/pydata-hull":              ("upcoming",  "2026-03-27",  None),
+    "https://www.meetup.com/pydata-hull":              ("upcoming",  "2026-03-27",  "https://www.meetup.com/pydata-hull/events/313808503/"),
     "https://www.meetup.com/pydata-wolverhampton":     ("unvisited", None,          None),
     "https://www.meetup.com/pydata-birmingham-uk":     ("unvisited", None,          None),
     "https://www.meetup.com/pydata-cornwall":          ("upcoming",  "2026-05-?",   None),
@@ -52,6 +52,7 @@ MY_GROUPS = {
     "https://www.meetup.com/pydata-southampton":       ("spoken",    None,          None),
     "https://www.meetup.com/pydata-surrey":            ("unvisited", None,          None),
     "https://www.meetup.com/pydata-kent":              ("unvisited", None,          None),
+    "https://www.meetup.com/pydata-edinburgh":         ("unvisited", None,          None),
 }
 
 STADIA_API_KEY = os.environ.get("STADIA_API_KEY", "your-key-here")
