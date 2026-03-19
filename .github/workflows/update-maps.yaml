@@ -31,11 +31,6 @@ jobs:
       
       - name: Run update script
         run: python PyDataMap.py
-
-      - name: Generate personal map
-        env:
-          STADIA_API_KEY: ${{ secrets.STADIA_API_KEY }}
-        run: python experiments/TourDePyData/PersonalMap.py
       
       - name: Commit and push changes
         run: |
