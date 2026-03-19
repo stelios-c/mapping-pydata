@@ -41,6 +41,6 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -f pydata_world_map.html pydata_world_map_active.html pydata_world_map_inactive.html pydata_personal_map.html pydata_groups.csv geocode_cache.json 2>/dev/null || true
+          git add -f pydata_world_map.html pydata_world_map_active.html pydata_world_map_inactive.html pydata_personal_map.html pydata_world_map_non_pro.html pydata_groups.csv geocode_cache.json 2>/dev/null || true
           git diff --quiet --staged || git commit -m "🗺️ Update maps $(date -u +'%Y-%m-%d')"
           git push
