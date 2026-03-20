@@ -300,7 +300,7 @@ def build_popup_html(g):
     return f"""
         <b><a href='{g['url']}' target='_blank'>{g['name']}</a></b><br>
         📍 {g.get('city', 'Unknown')}<br>
-        👥 {int(float(g.get('members') or 0) or 0)} members<br>
+        👥 {0 if pd.isna(g.get('members')) else int(float(g.get('members')))} members<br>
         📅 {past_count} past events<br>
         ⏱️ Last event: {days_str}<br>
         🔜 Upcoming: {upcoming_str}<br>
