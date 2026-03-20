@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pycountry
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
 
@@ -24,18 +25,52 @@ CSV_PATH    = args[0] if args else "pydata_groups.csv"
 FAILED_ONLY = "--failed-only" in flags
 CACHE_FILE  = Path("geocode_cache.json")
 
+
+def normalise_country(name: str) -> str:
+    """Return the English country name for a native-language or alternate name."""
+    if not name:
+        return name
+    name = name.strip()
+
+    # Try exact match first (handles ISO codes, English names, many native names)
+    try:
+        return pycountry.countries.lookup(name).name
+    except LookupError:
+        pass
+
+    # Try searching common_name and official_name fields
+    for country in pycountry.countries:
+        if name.lower() in (
+            getattr(country, "common_name", "").lower(),
+            getattr(country, "official_name", "").lower(),
+        ):
+            return country.name
+
+    # If all else fails, return original
+    return name
+
+
 def load_cache():
     if CACHE_FILE.exists():
         with open(CACHE_FILE) as f:
             return json.load(f)
     return {"hints": {}, "coords": {}}
 
+
 def save_cache(cache):
     with open(CACHE_FILE, "w") as f:
         json.dump(cache, f, indent=2)
 
+
 def main():
     df = pd.read_csv(CSV_PATH)
+
+    # Normalise country names before geocoding
+    if "country" in df.columns:
+        df["country"] = df["country"].apply(
+            lambda x: normalise_country(x) if pd.notna(x) else x
+        )
+
     print(f"Loaded {len(df)} groups from {CSV_PATH}")
 
     if FAILED_ONLY:
@@ -82,15 +117,21 @@ def main():
         try:
             location = geocode(query)
             if location:
+                # Extract and normalise country from Nominatim display_name
+                parts       = location.address.split(", ")
+                raw_country = parts[-1].strip() if parts else ""
+                normalised  = normalise_country(raw_country)
+
                 cache["coords"][query] = {
                     "lat":          location.latitude,
                     "lon":          location.longitude,
                     "display_name": location.address,
                 }
-                df.at[i, "lat"]   = location.latitude
-                df.at[i, "lon"]   = location.longitude
-                df.at[i, "query"] = query
-                print(f"  ✅  {name}  →  {query} [{source}]  ({location.latitude:.4f}, {location.longitude:.4f})")
+                df.at[i, "lat"]     = location.latitude
+                df.at[i, "lon"]     = location.longitude
+                df.at[i, "query"]   = query
+                df.at[i, "country"] = normalised
+                print(f"  ✅  {name}  →  {query} [{source}]  ({location.latitude:.4f}, {location.longitude:.4f})  [{normalised}]")
                 success += 1
             else:
                 print(f"  ✗   {name}  →  {query} [{source}]  (not found — add a hint to geocode_cache.json)")
@@ -108,6 +149,7 @@ def main():
     if failed:
         print(f"\nTo fix failures, add entries to geocode_cache.json like:")
         print(f'  "hints": {{ "Group Name": "City, Country" }}')
+
 
 if __name__ == "__main__":
     main()

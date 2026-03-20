@@ -920,8 +920,8 @@
       "display_name": "Bruxelles - Brussel, Brussel-Hoofdstad - Bruxelles-Capitale, R\u00e9gion de Bruxelles-Capitale - Brussels Hoofdstedelijk Gewest, Belgi\u00eb / Belgique / Belgien"
     },
     "Paris, France": {
-      "lat": 48.8588897,
-      "lon": 2.320041,
+      "lat": 48.8534951,
+      "lon": 2.3483915,
       "display_name": "Paris, \u00cele-de-France, France m\u00e9tropolitaine, France"
     },
     "Eindhoven, Nederland": {
@@ -1005,8 +1005,8 @@
       "display_name": "Sion, Valais/Wallis, 1950, Schweiz/Suisse/Svizzera/Svizra"
     },
     "Gdansk, Polska": {
-      "lat": 54.4288032,
-      "lon": 18.798327,
+      "lat": 54.3482907,
+      "lon": 18.6540233,
       "display_name": "Gda\u0144sk, wojew\u00f3dztwo pomorskie, Polska"
     },
     "Eivissa, Espa\u00f1a": {
@@ -1015,8 +1015,8 @@
       "display_name": "Eivissa, Illes Balears, Espa\u00f1a"
     },
     "Bydgoszcz, Polska": {
-      "lat": 53.1297127,
-      "lon": 18.0294488,
+      "lat": 53.1219648,
+      "lon": 18.0002529,
       "display_name": "Bydgoszcz, wojew\u00f3dztwo kujawsko-pomorskie, Polska"
     },
     "M\u00fcnchen, Deutschland": {
@@ -1035,8 +1035,8 @@
       "display_name": "Milano, Lombardia, Italia"
     },
     "Warsaw, Polska": {
-      "lat": 52.2319581,
-      "lon": 21.0067249,
+      "lat": 52.2333742,
+      "lon": 21.0711489,
       "display_name": "Warszawa, wojew\u00f3dztwo mazowieckie, Polska"
     },
     "Venezia, Italia": {
@@ -1350,6 +1350,11 @@
       "display_name": "Basel, Basel-Stadt, Schweiz/Suisse/Svizzera/Svizra"
     },
     "Lausanne, Switzerland": {
+      "lat": 46.5218269,
+      "lon": 6.6327025,
+      "display_name": "Lausanne, District de Lausanne, Vaud, Schweiz/Suisse/Svizzera/Svizra"
+    },
+    "Lausanne, Schweiz": {
       "lat": 46.5218269,
       "lon": 6.6327025,
       "display_name": "Lausanne, District de Lausanne, Vaud, Schweiz/Suisse/Svizzera/Svizra"
