@@ -69,7 +69,9 @@ def should_skip_unvisited(g):
 
 
 def create_personal_map(output_file="pydata_personal_map.html"):
-    df = pd.read_csv("../../pydata_groups.csv")
+    df = pd.read_csv("pydata_groups.csv")
+    if "members" in df.columns:
+        df["members"] = df["members"].fillna(0).astype(int)
     groups = df.to_dict(orient="records")
 
     watercolor_url = (
