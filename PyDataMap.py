@@ -314,7 +314,7 @@ def coord_key(lat, lon, precision=2):
 
 # Create a circle marker for a group
 def create_marker(g, style='orange'):
-    members = g.get('members') or 10
+    members = {0 if pd.isna(g.get('members')) else int(float(g.get('members')))}
 
     if style == 'layers':
         fill_color, fill_opacity = get_marker_style_layers(g)
