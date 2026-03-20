@@ -3,3 +3,4 @@ folium
 geopy
 playwright
 python-dotenv
+pycountry

@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.19.6"
+__generated_with = "0.20.2"
 app = marimo.App(width="medium")
 
 
@@ -172,7 +172,6 @@ def _(MarkerCluster, folium, math, pd):
         return world_map
 
     print("✓ Helper functions loaded")
-
     return (create_map,)
 
 
@@ -280,6 +279,23 @@ def _(df):
     # Most inactive
     print("Most inactive (by days since last event):")
     df[df['days_since_last_event'].notna()].nlargest(10, 'days_since_last_event')[['name', 'city', 'days_since_last_event', 'has_upcoming_events']]
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""
+    # `meetups by` Country
+    print("Most inactive (by days since last event):")
+    df[df['days_since_last_event'].notna()].nlargest(10, 'days_since_last_event')[['name', 'city', 'days_since_last_event', 'has_upcoming_events']]
+    """)
+    return
+
+
+@app.cell
+def _(df):
+    print("Total Meetups per Country")
+    df['country'].value_counts().rename_axis('country').reset_index(name='total')
     return
 
 
