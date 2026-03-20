@@ -23,6 +23,8 @@ def get_cached_pydata_groups():
         df = pd.read_csv("pydata_groups.csv")
         if 'in_pro_network' not in df.columns:
             df['in_pro_network'] = False
+        if 'pro_network_misses' not in df.columns:
+            df['pro_network_misses'] = 0
         return df.to_dict(orient='records')
     return None
 
@@ -40,7 +42,7 @@ async def get_pydata_groups():
                 let lastCount = 0;
                 let stableCount = 0;
 
-                while (stableCount < 5) {
+                while (stableCount < 10) {
                     document.querySelectorAll('[data-testid="group"]').forEach(el => {
                         const link = el.querySelector('a');
                         const url = link?.href || '';
@@ -298,7 +300,7 @@ def build_popup_html(g):
     return f"""
         <b><a href='{g['url']}' target='_blank'>{g['name']}</a></b><br>
         📍 {g.get('city', 'Unknown')}<br>
-        👥 👥 {int(float(g.get('members') or 0) or 0)} members<br>
+        👥 {int(float(g.get('members') or 0) or 0)} members<br>
         📅 {past_count} past events<br>
         ⏱️ Last event: {days_str}<br>
         🔜 Upcoming: {upcoming_str}<br>
@@ -487,13 +489,39 @@ async def main():
         else:
             combined_groups = groups_with_coords
 
-        # Update in_pro_network for all groups based on current scrape
-        for g in combined_groups:
-            was_pro = g.get('in_pro_network', False)
-            now_pro = g['url'] in pro_urls
-            if was_pro and not now_pro:
-                print(f"  ⚠️  No longer in Pro network: {g['name']}")
-            g['in_pro_network'] = now_pro
+        # Option 3: Only update pro network status if scrape looks complete.
+        # If the scrape returned fewer than 80% of cached groups, it was likely
+        # a partial load — skip the update to avoid false removals.
+        cached_pro_count = sum(1 for g in combined_groups if g.get('in_pro_network', False))
+        if len(new_groups) < cached_pro_count * 0.8:
+            print(
+                f"\n⚠️  Scrape returned only {len(new_groups)} groups vs "
+                f"{cached_pro_count} cached Pro groups "
+                f"— skipping Pro network status update to avoid false removals."
+            )
+        else:
+            # Option 2: Use a miss counter — only mark as removed after 3 consecutive misses.
+            for g in combined_groups:
+                was_pro = g.get('in_pro_network', False)
+                now_pro = g['url'] in pro_urls
+
+                if now_pro:
+                    # Confirmed present — reset miss counter
+                    g['in_pro_network'] = True
+                    g['pro_network_misses'] = 0
+                elif was_pro:
+                    # Not seen this run — increment miss counter
+                    misses = int(g.get('pro_network_misses') or 0) + 1
+                    g['pro_network_misses'] = misses
+                    if misses >= 3:
+                        print(f"  ⚠️  No longer in Pro network (confirmed {misses}x): {g['name']}")
+                        g['in_pro_network'] = False
+                    else:
+                        print(f"  ⚠️  Not seen in Pro network (miss {misses}/3): {g['name']} — keeping for now")
+                        g['in_pro_network'] = True  # keep until confirmed absent
+                else:
+                    g['in_pro_network'] = False
+                    g['pro_network_misses'] = 0
 
         df = pd.DataFrame(combined_groups)
         df.to_csv('pydata_groups.csv', index=False)
