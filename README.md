@@ -12,6 +12,7 @@ This repo consists of three main parts:
     - [World Map](https://hevansdev.github.io/mapping-pydata/pydata_world_map.html) a 1:1 recreation of the [map from Meetup](https://www.meetup.com/pro/pydata/) but with the location of Meetups corrected.
     - [World Map Active](https://hevansdev.github.io/mapping-pydata/pydata_world_map_active.html) a map intended to make it easy to spot active PyData groups with a view towards attending / speaking at them.
     - [World Map Inactive](https://hevansdev.github.io/mapping-pydata/pydata_world_map_inactive.html) a map intended to draw attention to groups that haven't hosted an event in a while. You should consider volunteering for, speaking at, or sponsoring these groups to help them out.
+    - [World Map Non-Pro](https://hevansdev.github.io/mapping-pydata/pydata_world_map_non_pro.html) a map of (independent?) PyData groups not included in the PyData Meetup Pro Network.
 
 ## FAQ
 
