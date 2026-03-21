@@ -18,6 +18,31 @@ CACHE_FILE = Path("geocode_cache.json")
 ESRI_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'
 ESRI_ATTR = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
 
+# Columns that should always be whole numbers (never floats or sets)
+INT_COLUMNS = ['members', 'past_events_count', 'organizer_count', 'days_since_last_event', 'pro_network_misses']
+
+
+def sanitise_int(value, default=None):
+    """Coerce a value to int, handling NaN, sets, floats, and strings."""
+    if isinstance(value, set):
+        value = next(iter(value), None)
+    try:
+        if value is None or (isinstance(value, float) and math.isnan(value)):
+            return default
+        return int(float(value))
+    except (TypeError, ValueError):
+        return default
+
+
+def sanitise_dataframe(df):
+    """Ensure integer columns are stored as nullable integers in the DataFrame."""
+    for col in INT_COLUMNS:
+        if col in df.columns:
+            df[col] = df[col].apply(lambda x: sanitise_int(x))
+            df[col] = pd.array(df[col], dtype=pd.Int64Dtype())
+    return df
+
+
 def get_cached_pydata_groups():
     if Path("pydata_groups.csv").exists():
         df = pd.read_csv("pydata_groups.csv")
@@ -25,8 +50,10 @@ def get_cached_pydata_groups():
             df['in_pro_network'] = False
         if 'pro_network_misses' not in df.columns:
             df['pro_network_misses'] = 0
+        df = sanitise_dataframe(df)
         return df.to_dict(orient='records')
     return None
+
 
 # Scrape all PyData groups from meetup.com/pro/pydata
 async def get_pydata_groups():
@@ -82,6 +109,7 @@ async def get_pydata_groups():
         g['in_pro_network'] = True
 
     return groups
+
 
 # Get public data from main group page - no login required
 async def get_group_details_public(page, group_url):
@@ -172,6 +200,7 @@ async def get_group_details_public(page, group_url):
 
     return details
 
+
 # Load existing cache or return default structure
 def load_cache():
     if CACHE_FILE.exists():
@@ -182,16 +211,19 @@ def load_cache():
         "coords": {}
     }
 
+
 # Save cache to file
 def save_cache(cache):
     with open(CACHE_FILE, 'w') as f:
         json.dump(cache, f, indent=2)
+
 
 # Get the geocoding query for a group name
 def get_query_for_group(name, cache):
     if name in cache['hints']:
         return cache['hints'][name]
     return name.replace('PyData ', '').replace(' Meetup', '').replace(' Group', '').replace('PyData', '')
+
 
 # Geocode groups with caching
 def geocode_groups(groups):
@@ -252,6 +284,7 @@ def geocode_groups(groups):
 
     return results
 
+
 # Extract country from cached display_name
 def get_country_from_cache(query):
     cache = load_cache()
@@ -261,6 +294,7 @@ def get_country_from_cache(query):
         if parts:
             return parts[-1].strip()
     return None
+
 
 # Calculate fill color and opacity for layers map (green/blue active styling)
 def get_marker_style_layers(group):
@@ -276,6 +310,7 @@ def get_marker_style_layers(group):
             fill_opacity = max(0.4, 0.9 - (math.log1p(days) / math.log1p(365)))
     return fill_color, fill_opacity
 
+
 # Calculate fill color and opacity for inactive map (red inactive, faint blue active)
 def get_marker_style_inactive(group):
     days = group.get('days_since_last_event')
@@ -290,17 +325,19 @@ def get_marker_style_inactive(group):
             fill_opacity = min(0.9, 0.1 + (math.log1p(days) / math.log1p(365)) * 0.8)
     return fill_color, fill_opacity
 
+
 # Build popup HTML for a group
 def build_popup_html(g):
     days = g.get('days_since_last_event')
     days_str = f"{days} days ago" if days is not None else "Never"
     upcoming_str = "Yes ✓" if g.get('has_upcoming_events') else "No"
-    past_count = g.get('past_events_count', 0) or 0
+    past_count = g.get('past_events_count') or 0
+    members = g.get('members') or 0
 
     return f"""
         <b><a href='{g['url']}' target='_blank'>{g['name']}</a></b><br>
         📍 {g.get('city', 'Unknown')}<br>
-        👥 {0 if pd.isna(g.get('members')) else int(float(g.get('members')))} members<br>
+        👥 {members} members<br>
         📅 {past_count} past events<br>
         ⏱️ Last event: {days_str}<br>
         🔜 Upcoming: {upcoming_str}<br>
@@ -308,17 +345,15 @@ def build_popup_html(g):
         <a href='{g.get('leaders_url', '')}' target='_blank'>Leaders</a>
     """
 
+
 # Round coords to group nearby markers (2 decimal places ≈ 1km)
 def coord_key(lat, lon, precision=2):
     return (round(lat, precision), round(lon, precision))
 
+
 # Create a circle marker for a group
 def create_marker(g, style='orange'):
-    raw = g.get('members')
-    if isinstance(raw, set):
-        raw = next(iter(raw), None)  # unwrap single-element set
-    members = int(float(raw)) if raw is not None and not pd.isna(raw) else 10
-    members = max(1, members)  # guard against 0 for math.log
+    members = max(1, g.get('members') or 1)
 
     if style == 'layers':
         fill_color, fill_opacity = get_marker_style_layers(g)
@@ -348,6 +383,7 @@ def create_marker(g, style='orange'):
         fill_opacity=fill_opacity,
         weight=0
     )
+
 
 def add_hash_navigation(world_map):
     hash_script = """
@@ -393,6 +429,7 @@ def add_hash_navigation(world_map):
     """
     world_map.get_root().html.add_child(folium.Element(hash_script))
 
+
 def make_base_map(location=[30, 0], zoom_start=2):
     world_map = folium.Map(location=location, zoom_start=zoom_start, tiles=None)
     folium.TileLayer(
@@ -401,6 +438,7 @@ def make_base_map(location=[30, 0], zoom_start=2):
         name='Esri World Street Map',
     ).add_to(world_map)
     return world_map
+
 
 def _add_markers_to_map(world_map, groups_enriched, style):
     coord_groups = defaultdict(list)
@@ -423,6 +461,7 @@ def _add_markers_to_map(world_map, groups_enriched, style):
             for g in groups:
                 create_marker(g, style=style).add_to(cluster)
 
+
 # Create simple world map with orange circle markers (only cluster overlapping)
 def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
     world_map = make_base_map()
@@ -430,6 +469,7 @@ def create_world_map(groups_enriched, output_file='pydata_world_map.html'):
     add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
+
 
 # Create world map with activity-based styling
 def create_world_map_layers(groups_enriched, output_file='pydata_world_map_active.html'):
@@ -439,6 +479,7 @@ def create_world_map_layers(groups_enriched, output_file='pydata_world_map_activ
     world_map.save(output_file)
     print(f"Saved {output_file}")
 
+
 # Create world map highlighting inactive groups
 def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_inactive.html'):
     world_map = make_base_map()
@@ -446,6 +487,7 @@ def create_world_map_inactive(groups_enriched, output_file='pydata_world_map_ina
     add_hash_navigation(world_map)
     world_map.save(output_file)
     print(f"Saved {output_file}")
+
 
 # Create world map showing only groups outside the Pro network
 def create_world_map_non_pro(groups_enriched, output_file='pydata_world_map_non_pro.html'):
@@ -456,14 +498,17 @@ def create_world_map_non_pro(groups_enriched, output_file='pydata_world_map_non_
     world_map.save(output_file)
     print(f"Saved {output_file} ({len(non_pro)} non-Pro groups)")
 
+
 # Load cached enrichment data from CSV
 def load_enrichment_cache(csv_file='pydata_groups.csv'):
     cache = {}
     if Path(csv_file).exists():
         df = pd.read_csv(csv_file)
+        df = sanitise_dataframe(df)
         for _, row in df.iterrows():
             cache[row['url']] = row.to_dict()
     return cache
+
 
 async def main():
     print("=" * 60)
@@ -528,6 +573,7 @@ async def main():
                     g['pro_network_misses'] = 0
 
         df = pd.DataFrame(combined_groups)
+        df = sanitise_dataframe(df)
         df.to_csv('pydata_groups.csv', index=False)
 
         print("Reloading cache...")
@@ -549,6 +595,8 @@ async def main():
     cached_count = 0
     failed_count = 0
 
+    SCRAPE_RETRIES = 2  # number of retry attempts before falling back to cache
+
     async with async_playwright() as p:
         browser = await p.firefox.launch(headless=True)
         page = await browser.new_page(viewport={'width': 1280, 'height': 800})
@@ -556,34 +604,45 @@ async def main():
         for i, group in enumerate(groups):
             print(f"[{i + 1}/{len(groups)}] {group['name']}...", end=' ', flush=True)
 
-            try:
-                details = await get_group_details_public(page, group['url'] + '/')
+            details = None
+            last_error = None
+
+            for attempt in range(1 + SCRAPE_RETRIES):
+                try:
+                    details = await get_group_details_public(page, group['url'] + '/')
+                    break  # success — exit retry loop
+                except Exception as e:
+                    last_error = e
+                    if attempt < SCRAPE_RETRIES:
+                        print(f"retrying ({attempt + 1}/{SCRAPE_RETRIES})...", end=' ', flush=True)
+                        await asyncio.sleep(2)
+
+            if details is not None:
                 enriched = {**group, **details}
                 all_groups_enriched.append(enriched)
-
                 days = details.get('days_since_last_event')
                 days_str = f"{days} days ago" if days is not None else "never"
                 upcoming = "✓" if details.get('has_upcoming_events') else "✗"
                 print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}", flush=True)
                 fresh_count += 1
-            except Exception as e:
+            else:
+                # All attempts failed — fall back to cache
                 cached = enrichment_cache.get(group['url'])
                 if cached and 'past_events_count' in cached:
                     enriched = {**group}
                     for key in ['past_events_count', 'organizer_count', 'primary_organizer',
                                 'last_event_date', 'has_upcoming_events', 'days_since_last_event',
                                 'events_url', 'leaders_url']:
-                        if key in cached and pd.notna(cached.get(key)):
+                        if key in cached and cached.get(key) is not None:
                             enriched[key] = cached[key]
                     all_groups_enriched.append(enriched)
-
                     days = enriched.get('days_since_last_event')
-                    days_str = f"{days} days ago" if days is not None and pd.notna(days) else "never"
+                    days_str = f"{days} days ago" if days is not None else "never"
                     upcoming = "✓" if enriched.get('has_upcoming_events') else "✗"
                     print(f"⟳ {enriched.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming} [cached]", flush=True)
                     cached_count += 1
                 else:
-                    print(f"✗ {type(e).__name__} (no cache)", flush=True)
+                    print(f"✗ {type(last_error).__name__} (no cache)", flush=True)
                     all_groups_enriched.append(group)
                     failed_count += 1
 
@@ -600,12 +659,14 @@ async def main():
     create_world_map_non_pro(all_groups_enriched, 'pydata_world_map_non_pro.html')
 
     df = pd.DataFrame(all_groups_enriched)
+    df = sanitise_dataframe(df)
     df.to_csv('pydata_groups.csv', index=False)
     print("Saved pydata_groups.csv", flush=True)
 
     print("\n" + "=" * 60)
     print("Done!")
     print("=" * 60, flush=True)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
