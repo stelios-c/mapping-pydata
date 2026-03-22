@@ -32,6 +32,9 @@ jobs:
       - name: Run update script
         run: python PyDataMap.py
       
+      - name: Run personal map update script
+        run: python experiments/TourDePyData/PersonalMap.py
+      
       - name: Commit and push changes
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"

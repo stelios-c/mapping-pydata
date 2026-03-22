@@ -1,5 +1,6 @@
 import base64
 import os
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from PyDataMap import build_popup_html, add_hash_navigation
 
 
