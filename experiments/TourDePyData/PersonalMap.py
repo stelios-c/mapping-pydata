@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from PyDataMap import build_popup_html, add_hash_navigation
 
 
-ICON_DIR = Path("../../icons")
+ICON_DIR = Path(__file__).parent.parent.parent / "icons"
 
 
 def load_icon(path):
