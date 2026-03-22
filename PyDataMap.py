@@ -181,7 +181,12 @@ async def get_group_details_public(page, group_url):
             const upcomingEventCards = document.querySelectorAll('a[href*="eventOrigin=group_upcoming_events"]');
             const hasUpcoming = upcomingEventCards.length > 0;
 
+            // Scrape member count from the individual group page as a reliable source
+            const memberMatch = text.match(/([\\d,]+)\\s*members/i);
+            const members = memberMatch ? parseInt(memberMatch[1].replace(/,/g, '')) : null;
+
             return {
+                members: members,
                 past_events_count: pastEventsCount,
                 organizer_count: organizerCount,
                 primary_organizer: primaryOrganizer,
@@ -627,11 +632,16 @@ async def main():
 
             if details is not None:
                 enriched = {**group, **details}
+                # Prefer member count from individual page if the Pro listing
+                # scrape missed it (details['members'] is the more reliable source)
+                if not details.get('members') and group.get('members'):
+                    enriched['members'] = group['members']
                 all_groups_enriched.append(enriched)
                 days = details.get('days_since_last_event')
                 days_str = f"{days} days ago" if days is not None else "never"
                 upcoming = "✓" if details.get('has_upcoming_events') else "✗"
-                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}", flush=True)
+                members_str = f", members: {enriched.get('members', '?')}"
+                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}{members_str}", flush=True)
                 fresh_count += 1
             else:
                 # All attempts failed — fall back to cache
