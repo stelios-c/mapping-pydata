@@ -113,7 +113,15 @@ async def get_pydata_groups():
 
 # Get public data from main group page - no login required
 async def get_group_details_public(page, group_url):
-    await page.goto(group_url, wait_until='networkidle', timeout=30000)
+    # Use domcontentloaded instead of networkidle — Meetup keeps background
+    # connections alive indefinitely, causing networkidle to never fire.
+    await page.goto(group_url, wait_until='domcontentloaded', timeout=15000)
+
+    # Wait for the key content to be present rather than relying on network state
+    try:
+        await page.wait_for_selector('h1', timeout=10000)
+    except Exception:
+        pass  # proceed anyway and let the evaluate scrape what it can
 
     details = await page.evaluate('''
         () => {
@@ -193,7 +201,7 @@ async def get_group_details_public(page, group_url):
             last_event = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
             now = datetime.now(timezone.utc)
             details['days_since_last_event'] = (now - last_event).days
-        except:
+        except Exception:
             details['days_since_last_event'] = None
     else:
         details['days_since_last_event'] = None
@@ -538,7 +546,7 @@ async def main():
         else:
             combined_groups = groups_with_coords
 
-        # Option 3: Only update pro network status if scrape looks complete.
+        # Only update pro network status if scrape looks complete.
         # If the scrape returned fewer than 80% of cached groups, it was likely
         # a partial load — skip the update to avoid false removals.
         cached_pro_count = sum(1 for g in combined_groups if g.get('in_pro_network', False))
@@ -549,7 +557,7 @@ async def main():
                 f"— skipping Pro network status update to avoid false removals."
             )
         else:
-            # Option 2: Use a miss counter — only mark as removed after 3 consecutive misses.
+            # Use a miss counter — only mark as removed after 3 consecutive misses.
             for g in combined_groups:
                 was_pro = g.get('in_pro_network', False)
                 now_pro = g['url'] in pro_urls
