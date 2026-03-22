@@ -30,7 +30,7 @@ STATUS_ICONS = {
     "unvisited": load_icon(ICON_DIR / "unvisited.png"),
 }
 
-# Render order: unvisited first, then spoken, then upcoming on top
+# Render order: unvisited first, spoken second, upcoming last (on top)
 STATUS_ORDER = {"unvisited": 0, "spoken": 1, "upcoming": 2}
 
 # Values are (status, date, event_url) tuples
@@ -39,7 +39,7 @@ MY_GROUPS = {
     "https://www.meetup.com/pydata-london-meetup":     ("spoken",    None,          None),
     "https://www.meetup.com/meetup-group-djhiglzd":    ("unvisited", None,          None),  # PyData Glasgow
     "https://www.meetup.com/pydataireland":            ("unvisited", None,          None),  # PyData Ireland
-    "https://www.meetup.com/pydata-bradford":          ("upcoming", "2026-05-29",   None),
+    "https://www.meetup.com/pydata-bradford":          ("upcoming",  "2026-05-29",  None),
     "https://www.meetup.com/PyData-Manchester":        ("upcoming",  "2026-03-26",  "https://www.meetup.com/pydata-manchester/events/313770253/"),
     "https://www.meetup.com/pydata-leeds":             ("unvisited", None,          None),
     "https://www.meetup.com/pydata-huddersfield":      ("unvisited", None,          None),
@@ -73,8 +73,12 @@ def should_skip_unvisited(g):
     return False, None
 
 
-def create_personal_map(output_file="pydata_personal_map.html"):
-    df = pd.read_csv("pydata_groups.csv")
+def create_personal_map(output_file=None):
+    if output_file is None:
+        output_file = Path(__file__).parent / "pydata_personal_map.html"
+
+    CSV_PATH = Path(__file__).parent.parent.parent / "pydata_groups.csv"
+    df = pd.read_csv(CSV_PATH)
     if "members" in df.columns:
         df["members"] = df["members"].fillna(0).astype(int)
     groups = df.to_dict(orient="records")
@@ -94,11 +98,19 @@ def create_personal_map(output_file="pydata_personal_map.html"):
         max_zoom=16,
     )
 
+    # Create separate Leaflet panes per status so z-index is controlled at the
+    # pane level — the only reliable way to stack DivIcon markers in Leaflet.
+    # DivIcon ignores z_index_offset on folium.Marker; child CSS z-index is
+    # trapped inside the marker pane's stacking context and has no effect.
+    # CustomPane uses folium's own macro system so panes exist before markers.
+    for pane_name, z in [("pane-unvisited", 400), ("pane-spoken", 500), ("pane-upcoming", 600)]:
+        folium.map.CustomPane(pane_name, z_index=z).add_to(world_map)
+
     matched = 0
     skipped = 0
     unmatched_keys = set(MY_GROUPS.keys())
 
-    # Resolve entries and sort so upcoming/spoken render on top of unvisited
+    # Resolve entries and sort so upcoming markers are added last (rendered on top)
     groups_to_render = []
     for g in groups:
         url = str(g.get("url", "")).rstrip("/").lower()
@@ -109,6 +121,7 @@ def create_personal_map(output_file="pydata_personal_map.html"):
         if entry:
             groups_to_render.append((g, entry))
 
+    # ascending sort: unvisited=0 drawn first, spoken=1 next, upcoming=2 drawn last (on top)
     groups_to_render.sort(key=lambda x: STATUS_ORDER.get(x[1][0], 0))
 
     for g, entry in groups_to_render:
@@ -178,6 +191,7 @@ def create_personal_map(output_file="pydata_personal_map.html"):
             popup=folium.Popup(build_popup_html(g), max_width=300),
             tooltip=tooltip,
             icon=icon,
+            pane=f"pane-{status}",
         ).add_to(world_map)
 
         print(f"✓ {g['name']} ({status}){f' — {date}' if date else ''}")
@@ -249,7 +263,7 @@ def create_personal_map(output_file="pydata_personal_map.html"):
     """
     world_map.get_root().html.add_child(folium.Element(progress_html))
     add_hash_navigation(world_map)
-    world_map.save(output_file)
+    world_map.save(str(output_file))
     print(f"\nMatched {matched} of {len(MY_GROUPS)} groups ({skipped} inactive unvisited skipped)")
     print(f"Saved {output_file}")
 
