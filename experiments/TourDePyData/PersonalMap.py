@@ -30,6 +30,9 @@ STATUS_ICONS = {
     "unvisited": load_icon(ICON_DIR / "unvisited.png"),
 }
 
+# Render order: unvisited first, then spoken, then upcoming on top
+STATUS_ORDER = {"unvisited": 0, "spoken": 1, "upcoming": 2}
+
 # Values are (status, date, event_url) tuples
 # date is a string or None, event_url is a specific event link or None
 MY_GROUPS = {
@@ -95,15 +98,21 @@ def create_personal_map(output_file="pydata_personal_map.html"):
     skipped = 0
     unmatched_keys = set(MY_GROUPS.keys())
 
+    # Resolve entries and sort so upcoming/spoken render on top of unvisited
+    groups_to_render = []
     for g in groups:
         url = str(g.get("url", "")).rstrip("/").lower()
-
         entry = next(
             (v for k, v in MY_GROUPS.items() if k.rstrip("/").lower() == url),
             None
         )
-        if not entry:
-            continue
+        if entry:
+            groups_to_render.append((g, entry))
+
+    groups_to_render.sort(key=lambda x: STATUS_ORDER.get(x[1][0], 0))
+
+    for g, entry in groups_to_render:
+        url = str(g.get("url", "")).rstrip("/").lower()
         status, date, event_url = entry
 
         if pd.isna(g.get("lat")) or pd.isna(g.get("lon")):
