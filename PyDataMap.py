@@ -19,7 +19,7 @@ ESRI_TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Stre
 ESRI_ATTR = 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
 
 # Columns that should always be whole numbers (never floats or sets)
-INT_COLUMNS = ['members', 'past_events_count', 'organizer_count', 'days_since_last_event', 'pro_network_misses']
+INT_COLUMNS = ['members', 'past_events_count', 'organizer_count', 'days_since_last_event', 'pro_network_misses', 'upcoming_events_count']
 
 
 def sanitise_int(value, default=None):
@@ -50,6 +50,12 @@ def get_cached_pydata_groups():
             df['in_pro_network'] = False
         if 'pro_network_misses' not in df.columns:
             df['pro_network_misses'] = 0
+        # Backwards compat: derive count from old boolean column if present
+        if 'upcoming_events_count' not in df.columns:
+            if 'has_upcoming_events' in df.columns:
+                df['upcoming_events_count'] = df['has_upcoming_events'].apply(lambda x: 1 if x else 0)
+            else:
+                df['upcoming_events_count'] = 0
         df = sanitise_dataframe(df)
         return df.to_dict(orient='records')
     return None
@@ -179,7 +185,7 @@ async def get_group_details_public(page, group_url):
             }
 
             const upcomingEventCards = document.querySelectorAll('a[href*="eventOrigin=group_upcoming_events"]');
-            const hasUpcoming = upcomingEventCards.length > 0;
+            const upcomingEventsCount = upcomingEventCards.length;
 
             // Scrape member count from the individual group page as a reliable source
             const memberMatch = text.match(/([\\d,]+)\\s*members/i);
@@ -191,7 +197,7 @@ async def get_group_details_public(page, group_url):
                 organizer_count: organizerCount,
                 primary_organizer: primaryOrganizer,
                 last_event_date: lastEventDate,
-                has_upcoming_events: hasUpcoming
+                upcoming_events_count: upcomingEventsCount
             };
         }
     ''')
@@ -311,7 +317,7 @@ def get_country_from_cache(query):
 
 # Calculate fill color and opacity for layers map (green/blue active styling)
 def get_marker_style_layers(group):
-    if group.get('has_upcoming_events'):
+    if group.get('upcoming_events_count', 0) > 0:
         fill_color = '#22c55e'  # green
         fill_opacity = 0.9
     else:
@@ -327,7 +333,7 @@ def get_marker_style_layers(group):
 # Calculate fill color and opacity for inactive map (red inactive, faint blue active)
 def get_marker_style_inactive(group):
     days = group.get('days_since_last_event')
-    if group.get('has_upcoming_events') or (days is not None and days < 100):
+    if group.get('upcoming_events_count', 0) > 0 or (days is not None and days < 100):
         fill_color = '#0000FF'  # blue
         fill_opacity = 0.1
     else:
@@ -343,7 +349,8 @@ def get_marker_style_inactive(group):
 def build_popup_html(g):
     days = g.get('days_since_last_event')
     days_str = f"{days} days ago" if days is not None else "Never"
-    upcoming_str = "Yes ✓" if g.get('has_upcoming_events') else "No"
+    upcoming_count = g.get('upcoming_events_count') or 0
+    upcoming_str = f"{upcoming_count} ✓" if upcoming_count > 0 else "No"
     past_count = g.get('past_events_count') or 0
     members = g.get('members') or 0
 
@@ -639,9 +646,10 @@ async def main():
                 all_groups_enriched.append(enriched)
                 days = details.get('days_since_last_event')
                 days_str = f"{days} days ago" if days is not None else "never"
-                upcoming = "✓" if details.get('has_upcoming_events') else "✗"
+                upcoming = details.get('upcoming_events_count', 0)
+                upcoming_str = f"✓ {upcoming}" if upcoming > 0 else "✗"
                 members_str = f", members: {enriched.get('members', '?')}"
-                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming}{members_str}", flush=True)
+                print(f"✓ {details.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming_str}{members_str}", flush=True)
                 fresh_count += 1
             else:
                 # All attempts failed — fall back to cache
@@ -649,15 +657,16 @@ async def main():
                 if cached and 'past_events_count' in cached:
                     enriched = {**group}
                     for key in ['past_events_count', 'organizer_count', 'primary_organizer',
-                                'last_event_date', 'has_upcoming_events', 'days_since_last_event',
+                                'last_event_date', 'upcoming_events_count', 'days_since_last_event',
                                 'events_url', 'leaders_url']:
                         if key in cached and cached.get(key) is not None:
                             enriched[key] = cached[key]
                     all_groups_enriched.append(enriched)
                     days = enriched.get('days_since_last_event')
                     days_str = f"{days} days ago" if days is not None else "never"
-                    upcoming = "✓" if enriched.get('has_upcoming_events') else "✗"
-                    print(f"⟳ {enriched.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming} [cached]", flush=True)
+                    upcoming = enriched.get('upcoming_events_count', 0) or 0
+                    upcoming_str = f"✓ {upcoming}" if upcoming > 0 else "✗"
+                    print(f"⟳ {enriched.get('past_events_count', 0) or 0} events, last: {days_str}, upcoming: {upcoming_str} [cached]", flush=True)
                     cached_count += 1
                 else:
                     print(f"✗ {type(last_error).__name__} (no cache)", flush=True)

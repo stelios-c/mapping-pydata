@@ -66,6 +66,10 @@ STADIA_API_KEY = os.environ.get("STADIA_API_KEY", "your-key-here")
 def should_skip_unvisited(g):
     days = g.get("days_since_last_event")
     past_events = g.get("past_events_count") or 0
+    upcoming = g.get("upcoming_events_count") or 0
+
+    if upcoming >= 2:
+        return False, None
     if pd.isna(days) or days > 100:
         return True, "inactive"
     if past_events <= 1:
